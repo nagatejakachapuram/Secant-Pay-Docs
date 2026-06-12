@@ -95,15 +95,20 @@ Integration: Next.js API routes implement the Solana Actions specification (`act
 
 ## Helius
 
-Helius powers native Solana settlement detection via webhooks.
+Helius powers native Solana settlement detection via webhooks and real-time transaction confirmation via LaserStream WebSocket.
 
 | Capability | Usage |
 |-----------|-------|
 | Webhook delivery | Real-time notification when a Solana transaction matches monitored criteria |
+| WebSocket confirmation | Instant on-chain confirmation via `signatureSubscribe` — up to 200 ms faster than standard Solana WebSockets |
 | Devnet support | Settlement detection works on both devnet and mainnet |
 | Reference matching | Webhook payloads include transaction details for reference-based invoice matching |
 
-Integration: Helius webhook POSTs to a Next.js API route, which forwards to the Go backend for settlement validation. The backend verifies the payment against stored invoice state before marking it settled.
+Integration: Two complementary paths.
+
+**Settlement authority (webhooks):** Helius webhook POSTs to a Next.js API route, which forwards to the Go backend for settlement validation. The backend verifies the payment against stored invoice state before marking it settled. This is the authoritative settlement path.
+
+**Instant UX confirmation (WebSocket):** After a customer signs a Solana transaction, the frontend calls a server-side API route that opens a Helius WebSocket connection and subscribes to the transaction signature. The route returns the confirmation status within 2–3 seconds. The API key stays server-side — the browser never connects directly to Helius. If the WebSocket connection fails, the route falls back to `getSignatureStatuses` polling automatically.
 
 ## SNS (Solana Name Service)
 

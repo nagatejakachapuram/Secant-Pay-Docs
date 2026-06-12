@@ -109,6 +109,24 @@ Webhook events from Helius are treated as settlement signals, not as the sole so
 
 Webhook replay and duplicate delivery are handled by the settlement marker — if the marker already exists, the duplicate webhook is safely rejected without modifying invoice state.
 
+## Real-Time Transaction Confirmation
+
+Solana payments use a dual-path confirmation model:
+
+| Path | Purpose | Speed | Authority |
+|------|---------|-------|-----------|
+| WebSocket confirmation | Instant UI feedback to customer | ~2-3 seconds | Read-only — does not modify invoice state |
+| Webhook settlement | Authoritative invoice settlement | ~5-15 seconds | Writes to DynamoDB via atomic transaction |
+
+After a customer signs a Solana transaction, the frontend calls a server-side API route (`/api/solana-confirm`) that opens a Helius LaserStream WebSocket connection and subscribes to the transaction signature. The confirmation result is returned to the browser within seconds.
+
+Security properties:
+
+- **API key isolation.** The Helius WebSocket URL (which contains the API key) is only used server-side. The browser calls `/api/solana-confirm` with just the transaction signature.
+- **Read-only.** The WebSocket confirmation path cannot modify invoice state. It only reports whether a transaction was confirmed or failed on-chain.
+- **Automatic fallback.** If the WebSocket connection fails (network issue, Helius outage), the route falls back to `getSignatureStatuses` RPC polling with the same timeout guarantee.
+- **Settlement authority unchanged.** The webhook path remains the sole mechanism for marking invoices as `SETTLED`. The WebSocket path is purely for user experience.
+
 ## Testnet Isolation
 
 Testnet mode uses Base Sepolia and Solana Devnet. Settlement detection on Solana devnet uses native Helius webhook infrastructure rather than depending on EVM-first indexer coverage, ensuring test payments follow the same validation path as production.

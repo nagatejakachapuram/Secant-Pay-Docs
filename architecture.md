@@ -47,7 +47,7 @@ flowchart TB
   subgraph Providers["External Providers"]
     Zerion["Zerion API\nEVM portfolio, swaps, bridges"]
     Jupiter["Jupiter API\nSolana quotes, swaps,\nSPL checkout routing"]
-    Helius["Helius\nSolana webhooks,\nsettlement detection"]
+    Helius["Helius\nSolana webhooks + WebSocket,\nsettlement detection + instant confirmation"]
     SNS["SNS Resolver\n.sol name resolution"]
     SolPay["Solana Pay\nPayment URL standard"]
     Actions["Solana Actions\nBlinks metadata + tx builder"]
@@ -82,7 +82,7 @@ The frontend serves as both the merchant interface and the API gateway. Built on
 | Scan & Pay | Point-of-sale interface with QR scanning, amount keypad, balance validation |
 | Invoices | Invoice creation, payment link generation, Blinks integration, status tracking |
 | Swap & Bridge | Token routing UI with slippage controls, powered by Jupiter and Zerion |
-| API Routes | Server-side proxies for provider APIs, webhook receivers, Actions endpoints. API keys never reach the browser — all provider calls route through server-side handlers. |
+| API Routes | Server-side proxies for provider APIs, webhook receivers, Actions endpoints, and real-time transaction confirmation via Helius WebSocket. API keys never reach the browser — all provider calls route through server-side handlers. |
 
 ### Backend — Go
 
@@ -136,26 +136,45 @@ sequenceDiagram
 
 ### Settlement Detection
 
+Two complementary paths run in parallel after a Solana payment is signed. The WebSocket path delivers instant UX feedback; the webhook path is the authoritative settlement mechanism.
+
 ```mermaid
 sequenceDiagram
   participant C as Customer Wallet
-  participant Chain as Base / Solana
-  participant H as Helius / Chain Observer
-  participant F as Frontend API Route
+  participant Chain as Solana
+  participant F as Frontend
+  participant Confirm as /api/solana-confirm
+  participant H as Helius
+  participant Webhook as /api/helius/webhook
   participant B as Backend
   participant DB as DynamoDB
 
   C->>Chain: Sign and submit USDC transfer
-  Chain-->>H: Transaction confirmed
-  H->>F: Webhook POST (tx details)
-  F->>B: Forward settlement event
+  Note over F: Two parallel paths begin
+
+  rect rgb(235, 245, 255)
+  Note right of F: Path 1 — Instant UX (WebSocket)
+  F->>Confirm: POST { signature }
+  Confirm->>H: signatureSubscribe (WSS)
+  H-->>Confirm: confirmed (~2-3s)
+  Confirm-->>F: { status: confirmed }
+  F-->>C: "Payment confirmed on-chain ✓"
+  end
+
+  rect rgb(235, 255, 240)
+  Note right of H: Path 2 — Authoritative Settlement (Webhook)
+  Chain-->>H: Transaction finalized
+  H->>Webhook: Webhook POST (tx details)
+  Webhook->>B: Forward settlement event
   B->>DB: GetItem (invoice, consistent read)
   B->>B: Validate: chain, recipient, asset, amount, reference
-  B->>DB: TransactWriteItems (settlement marker + invoice update)
+  B->>DB: TransactWriteItems (marker + invoice update)
   DB-->>B: Atomic commit
-  B-->>F: Settlement confirmed
-  F-->>C: Payment status: SETTLED
+  B-->>Webhook: Settlement confirmed
+  end
 ```
+
+For Base payments, the flow uses only the webhook path — the WebSocket confirmation is Solana-specific.
 
 ### Invoice Lifecycle
 
