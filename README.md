@@ -1,37 +1,36 @@
-# Secant Pay Docs
+# Secant Pay
 
-This folder is a self-contained GitBook-ready documentation workspace for Secant Pay. It can be moved into its own repository without depending on the app, backend, or SDK folders.
+Secant Pay is a self-custodial crypto payments platform for merchants accepting stablecoin payments on Base and Solana.
 
-Secant Pay is a self-custodial crypto payments workspace for merchants who want Base and Solana payments, portfolio visibility, invoices, point-of-sale checkout, and swap/bridge routing in one product.
+Merchants connect their own wallets, create payment requests, and receive funds directly to addresses they control. Secant never holds private keys or custodies funds. The platform tracks payment state around on-chain transfers and provides the merchant tooling layer: checkout, invoices, point-of-sale, portfolio visibility, swap routing, and settlement detection.
 
-The current product focuses on two payment rails:
+## Why Secant
 
-- **Base** for EVM USDC payments, EVM wallet connectivity, and Zerion-powered portfolio and routing data.
-- **Solana** for Solana Pay, Wallet Standard wallets, Jupiter-powered swaps, SPL token checkout, Blinks, SNS names, and native settlement detection.
+**Non-custodial by design.** Every payment settles directly from customer wallet to merchant wallet. Secant observes and verifies — it does not intermediate.
 
-Secant does not custody funds or private keys. Customers pay directly from their wallet, merchants receive into their own connected wallet, and the product tracks payment state around those on-chain transfers.
+**Two chains, one interface.** Base for EVM USDC payments with Zerion-powered portfolio and routing. Solana for Solana Pay, Jupiter-powered SPL checkout, Blinks, SNS names, and native settlement detection via Helius webhooks.
 
-## What is in Phase 1
+**Merchant-first.** Built for freelancers, agencies, global merchants, and Solana-native teams who need checkout, invoicing, and settlement tracking without giving up custody.
 
-Phase 1 is the current build:
+## Current State
 
-- Multi-wallet dashboard for EVM and Solana wallets.
-- Aggregated portfolio balances across connected wallets.
-- Terminal checkout for Base and Solana.
-- Scan & Pay point of sale for Base USDC and Solana Pay.
-- Invoices with Base links and Solana Blinks.
-- Swap & Bridge with Jupiter for Solana swaps and Zerion for EVM swaps and bridges.
-- Solana Wallet Adapter / Wallet Standard support.
-- SNS `.sol` resolution.
-- Helius webhook support for Solana settlement.
-- SPL token transfers through `@solana/spl-token` with compute budget priority fees.
+Phase 1 is live with multi-wallet dashboard, terminal checkout, Scan & Pay point-of-sale, invoice generation with Blinks support, swap and bridge routing, and Helius webhook settlement on Solana. See [Phase 1: Current Build](./phase-1-current-build.md) for the full feature set.
 
-## Docs Map
+## Roadmap
 
-- [Product Overview](./product-overview.md)
-- [Architecture](./architecture.md)
-- [Phase 1: Current Build](./phase-1-current-build.md)
-- [Phase 2: Growth Rails](./phase-2-growth-rails.md)
-- [Phase 3: Advanced Network](./phase-3-advanced-network.md)
-- [Integrations](./integrations.md)
-- [Security and Settlement](./security-and-settlement.md)
+| Phase | Focus | Status |
+|-------|-------|--------|
+| [Phase 1](./phase-1-current-build.md) | Core checkout, invoices, PoS, swap, settlement | Live |
+| [Phase 2](./phase-2-growth-rails.md) | SDK, hosted payment links, gasless payments, on/off-ramp, multi-stablecoin, metrics | Planned |
+| [Phase 3](./phase-3-advanced-network.md) | Subscriptions, platform integrations, smart routing, treasury, enterprise | Planned |
+
+## Documentation
+
+- [Product Overview](./product-overview.md) — what Secant does and who it serves.
+- [Architecture](./architecture.md) — system design, data flow, and settlement model.
+- [Phase 1: Current Build](./phase-1-current-build.md) — features shipped in the current release.
+- [Phase 2: Growth Rails](./phase-2-growth-rails.md) — SDK, gasless payments, payment links, and merchant tools.
+- [Phase 3: Advanced Network](./phase-3-advanced-network.md) — subscriptions, integrations, routing, and enterprise.
+- [Integrations](./integrations.md) — ecosystem providers powering Secant.
+- [Security and Settlement](./security-and-settlement.md) — custody model, validation, and operational controls.
+- [Contributing](./contributing.md) — how to contribute to docs and code.

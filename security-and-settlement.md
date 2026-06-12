@@ -1,55 +1,125 @@
 # Security and Settlement
 
-Secant is designed as a self-custodial payment product. The application coordinates payment requests, routing, and settlement tracking, but wallets sign transactions directly and funds settle to merchant-controlled addresses.
+Secant is designed as a self-custodial payment product. The application coordinates payment requests, routing, and settlement tracking. Wallets sign transactions directly and funds settle to merchant-controlled addresses.
 
 ## Custody Model
 
-Secant does not:
+### What Secant Does Not Do
 
-- Hold private keys.
-- Custody merchant or customer funds.
-- Move funds without wallet approval.
-- Replace on-chain settlement with internal balances.
+- Hold private keys for any wallet.
+- Custody merchant or customer funds at any point in the payment flow.
+- Move funds without explicit wallet approval and user signature.
+- Replace on-chain settlement with internal ledger balances.
+- Store seed phrases, mnemonics, or wallet recovery material.
 
-Secant does:
+### What Secant Does
 
-- Create payment requests.
-- Build transaction payloads for connected wallets.
-- Track expected payment amounts and recipients.
-- Verify settlement from chain and provider data.
-- Store invoice and payment status.
+- Create payment requests with chain-specific settlement parameters.
+- Build unsigned transaction payloads for connected wallets to sign.
+- Track expected payment amounts, recipients, assets, and references.
+- Verify settlement by matching on-chain evidence against stored invoice state.
+- Store invoice status and settlement metadata in a backend database.
 
-## Payment Validation
+```mermaid
+flowchart LR
+  C["Customer Wallet"] -->|"signs + submits"| Chain["Base / Solana"]
+  Chain -->|"funds arrive"| M["Merchant Wallet"]
+  Chain -->|"webhook event"| Secant["Secant Backend"]
+  Secant -->|"verify + update status"| DB["Invoice Store"]
 
-A payment should be marked settled only when the observed transaction matches the expected:
+  style Secant fill:none,stroke:#666,stroke-dasharray: 5 5
+```
 
-- Chain.
-- Recipient.
-- Asset.
-- Amount.
-- Invoice or payment reference.
-- Transaction status.
+Secant is the dashed box — it observes the payment flow but is never in the fund path.
 
-## Solana Reliability
+## Settlement Validation
 
-Solana transfers use official SPL Token tooling and compute budget priority fee support where relevant. This avoids fragile hand-built instruction byte layouts and improves transaction reliability under congestion.
+A payment is marked `SETTLED` only after the backend validates all of the following against the stored invoice:
+
+| Field | Validation Rule |
+|-------|----------------|
+| Chain | Webhook chain must match invoice chain exactly |
+| Recipient | Transaction recipient must match the merchant wallet address stored in the invoice settlement data |
+| Asset | Token address (Base) or token mint (Solana) must match the expected stablecoin |
+| Amount | Atomic amount must match exactly — no partial payments, no rounding tolerance |
+| Reference | Solana: reference public key must match. Base: transaction hash must be valid format |
+| Invoice status | Invoice must be `PENDING` — already settled, expired, or failed invoices are rejected |
+| Expiry | Invoice must not have passed its 30-minute expiry window |
+
+If any field fails validation, the settlement is rejected and the invoice status is unchanged.
+
+## Atomic Settlement
+
+Settlement is executed as a DynamoDB `TransactWriteItems` operation with two items:
+
+1. **Settlement marker** (`settlement#{chain}:{tx_id}`) — created with `attribute_not_exists` condition. If this marker already exists, the transaction was already processed.
+2. **Invoice update** — status set to `SETTLED` with condition `attribute_exists(invoice_id) AND status = PENDING`. If the invoice was already settled or doesn't exist, the transaction fails.
+
+Both items succeed or both fail. There is no intermediate state. This provides:
+
+- **No double settlement.** The same on-chain transaction cannot settle two invoices or settle the same invoice twice.
+- **No race conditions.** Concurrent webhook deliveries for the same transaction are safely serialized by DynamoDB's conditional write semantics.
+- **No phantom settlements.** An invoice cannot be marked settled without a corresponding settlement marker on record.
+
+## Invoice Lifecycle Security
+
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: Created with conditional put\n(no duplicate IDs)
+  PENDING --> SETTLED: Atomic transaction\n(marker + status update)
+  PENDING --> EXPIRED: Expiry check before settlement
+  PENDING --> FAILED: Validation failure
+  SETTLED --> [*]: Terminal state
+  EXPIRED --> [*]: Terminal state
+  FAILED --> [*]: Terminal state
+```
+
+| Transition | Protection |
+|-----------|-----------|
+| Creation | `attribute_not_exists(invoice_id)` prevents duplicate invoice IDs |
+| Settlement | `TransactWriteItems` with dual conditions prevents double-settle |
+| Expiry | Checked server-side before settlement processing, not client-side |
+| Status reads | `ConsistentRead: true` for settlement validation to prevent stale reads |
+
+## API Security
+
+| Control | Detail |
+|---------|--------|
+| **Authentication** | Bearer token required on all backend endpoints |
+| **Input validation** | Go `json.Decoder` with `DisallowUnknownFields()` rejects payloads containing fields not defined in the request struct |
+| **API key isolation** | Provider API keys (Zerion, Jupiter, Helius, Solana RPC) are stored as server-side environment variables. Next.js API routes proxy all provider calls — keys never appear in browser-accessible code or network responses |
+| **Response sanitization** | The Solana RPC proxy scrubs upstream URLs, origin headers, and query parameter values (potential API key fragments) from responses before returning to the client |
+| **No client-side secrets** | Only `NEXT_PUBLIC_` prefixed variables reach the browser bundle. Provider keys use non-public env vars |
+| **Error isolation** | Structured error codes returned to clients. Internal error details, stack traces, and provider responses are not leaked |
+
+## Solana Transaction Reliability
+
+Solana transfers use official `@solana/spl-token` tooling for instruction building — not hand-crafted byte layouts. Compute budget priority fees are attached to transactions where relevant, improving landing rates under network congestion.
+
+Associated token account creation is handled automatically when required for SPL token transfers.
 
 ## Webhook Handling
 
-Webhook events should be treated as settlement signals, not the only source of truth. The backend should validate webhook payloads against expected invoice state and on-chain transaction details before marking a payment settled.
+Webhook events from Helius are treated as settlement signals, not as the sole source of truth. The backend:
 
-## Testnet Mode
+1. Receives the webhook payload.
+2. Looks up the referenced invoice with a consistent read.
+3. Validates the payload against stored invoice state (chain, recipient, asset, amount, reference).
+4. Only then executes the atomic settlement transaction.
 
-Testnet mode should use Base Sepolia and Solana Devnet. Solana settlement detection should use native Solana infrastructure so reviewers can test payments without depending on EVM-first indexer coverage.
+Webhook replay and duplicate delivery are handled by the settlement marker — if the marker already exists, the duplicate webhook is safely rejected without modifying invoice state.
+
+## Testnet Isolation
+
+Testnet mode uses Base Sepolia and Solana Devnet. Settlement detection on Solana devnet uses native Helius webhook infrastructure rather than depending on EVM-first indexer coverage, ensuring test payments follow the same validation path as production.
 
 ## Operational Controls
 
-Recommended controls:
-
-- Idempotent settlement updates.
-- Webhook replay handling.
-- Invoice expiration.
-- Explicit chain and asset display in every checkout.
-- Error states for wrong chain, insufficient balance, and same-token swaps.
-- Audit logs for settlement transitions.
-
+| Control | Implementation |
+|---------|---------------|
+| Idempotent settlement | Settlement markers prevent reprocessing |
+| Webhook replay safety | Duplicate webhooks rejected by conditional writes |
+| Invoice expiration | 30-minute server-enforced expiry |
+| Chain and asset display | Active chain and token shown in every checkout screen |
+| Error states | Wrong chain, insufficient balance, expired invoice, and same-token swap errors handled with user-facing messages |
+| Consistent reads | Settlement validation reads use `ConsistentRead: true` |

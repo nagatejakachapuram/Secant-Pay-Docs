@@ -74,6 +74,37 @@ Scope:
 - FX and stablecoin exposure reporting.
 - Risk limits by wallet, chain, and counterparty.
 
+## Tax Reporting and Compliance Assistant
+
+AI-powered tax reporting that turns Secant transaction history into jurisdiction-aware, filing-ready output. Not tax advice — a reporting tool that already knows the merchant's payment data.
+
+Initial coverage (5 markets with highest crypto-merchant activity):
+
+| Country | Tax Framework | Key Rule |
+|---------|--------------|----------|
+| United States | IRS — capital gains on disposal, 1099 reporting | Every stablecoin swap is a taxable event; USDC-to-USD is reportable |
+| India | 30% flat tax on crypto gains + 1% TDS | Every token swap triggers 30% tax; no loss offset allowed |
+| United Kingdom | HMRC — capital gains tax, trading income rules | Crypto payments received as business income taxed as trading profits |
+| UAE | No federal income tax, but VAT applies | USDC payments subject to 5% VAT on goods/services |
+| Singapore | IRAS — no capital gains tax, but income tax on trading | Payment receipts taxed as business income; no capital gains event on holding |
+
+Scope:
+
+- Automatic taxable event classification based on the merchant's configured jurisdiction.
+- Settlement-level breakdown: which payments are income, which token conversions are disposal events, which are tax-neutral.
+- Capital gains and loss calculation where applicable, using cost basis from Secant's own transaction records.
+- Tax-ready export: CSV formatted for each country's filing system, PDF summary reports.
+- Local accounting tool integration: Tally (India), Xero (UK, AU, Singapore), QuickBooks (US), Zoho Books (UAE, India).
+- Natural language query interface: merchant asks "how much GST do I owe this quarter?" or "which payments are taxable in my jurisdiction?" and gets an answer grounded in their actual Secant data.
+- Quarterly and annual report generation on demand.
+
+Design constraints:
+
+- Labeled as "tax reporting assistant" — not tax advice. Disclaimers on all output.
+- Tax rules are maintained as structured rule engines per country, not LLM-generated interpretations.
+- AI handles natural language queries and report formatting. Tax classification logic is deterministic code, not probabilistic.
+- Additional countries added based on merchant demand and local tax advisor review.
+
 ## Enterprise Readiness
 
 - Organizations and workspaces with team management.
