@@ -105,6 +105,18 @@ Design constraints:
 - AI handles natural language queries and report formatting. Tax classification logic is deterministic code, not probabilistic.
 - Additional countries added based on merchant demand and local tax advisor review.
 
+## Security Audit
+
+Independent security review of the backend API and payment infrastructure before scaling merchant onboarding.
+
+Scope:
+
+- Webhook signature verification and bearer token authentication.
+- Invoice creation and settlement matching integrity.
+- API input validation and error handling (no secret leakage in responses).
+- AWS IAM and DynamoDB access policy review (least-privilege per Lambda).
+- Solana Pay URL construction and SPL transfer parameter validation.
+
 ## Enterprise Readiness
 
 - Organizations and workspaces with team management.
