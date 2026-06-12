@@ -87,7 +87,7 @@ Solana Actions expose invoice payment endpoints that unfurl as payable cards in 
 
 | Capability | Usage |
 |-----------|-------|
-| Action metadata | Invoice details served as Actions-compliant JSON |
+| Action metadata | Invoice details served as Actions-compliant JSON. When an invoice has a memo, it appears in the Blink card title and description. |
 | Transaction builder | Payment transaction generated on POST from the Action client |
 | Blinks display | Invoices appear as interactive payment cards in supporting clients |
 

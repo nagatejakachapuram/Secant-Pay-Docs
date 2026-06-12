@@ -38,10 +38,11 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 ## Invoices
 
 - Invoice creation with amount, chain, and recipient configuration.
+- Optional memo field for tagging invoices with context (company name, project, purpose). Memo is stored with the invoice and displayed on the invoice list, payment link, and Blink card.
 - Unique invoice ID generation (`inv_` + cryptographically random hex).
 - Base payment links for EVM USDC checkout.
 - Solana payment links for Solana Pay checkout.
-- Solana Actions endpoint exposing invoice metadata for Blinks — invoices unfurl as payable cards in compatible clients.
+- Solana Actions endpoint exposing invoice metadata for Blinks — invoices unfurl as payable cards in compatible clients. When a memo is set, it appears in the Blink title and description.
 - Copy and share actions for payment links.
 - Invoice status tracking: PENDING, SETTLED, EXPIRED, FAILED.
 - 30-minute invoice expiry enforced at both creation and settlement time.
