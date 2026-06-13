@@ -80,17 +80,7 @@ For Base payments, the flow uses only the webhook path — the WebSocket confirm
 
 ### Invoice Lifecycle
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','fontSize':'13px'}}}%%
-stateDiagram-v2
-  [*] --> PENDING: Invoice created
-  PENDING --> SETTLED: Valid settlement received
-  PENDING --> EXPIRED: 30-minute expiry elapsed
-  PENDING --> FAILED: Settlement validation failed
-  SETTLED --> [*]
-  EXPIRED --> [*]
-  FAILED --> [*]
-```
+![Invoice lifecycle](assets/invoice-lifecycle.svg)
 
 ## Settlement Model
 
