@@ -1,0 +1,149 @@
+<svg viewBox="0 0 1560 792" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
+  <title>Settlement detection sequence</title>
+  <desc>Two parallel paths after a signed Solana payment: Path 1 delivers instant UX via Helius WebSocket confirmation; Path 2 is the authoritative settlement via the Helius webhook validated by the backend and written atomically to DynamoDB.</desc>
+
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.13"/>
+    </filter>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="ard" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <style>
+    .h1   { font-size:19px; font-weight:700; fill:#0f172a; }
+    .h2   { font-size:11px; font-weight:400; fill:#64748b; }
+    .actor{ fill:#ffffff; stroke:#0f172a; stroke-width:1.4; }
+    .an   { font-size:11px; font-weight:600; fill:#0f172a; }
+    .life { stroke:#cbd5e1; stroke-width:1.2; stroke-dasharray:3 4; }
+    .msg  { stroke:#475569; stroke-width:1.5; fill:none; marker-end:url(#ar); }
+    .ret  { stroke:#94a3b8; stroke-width:1.3; fill:none; stroke-dasharray:5 4; marker-end:url(#ard); }
+    .ml   { font-size:10px; font-weight:500; fill:#334155; }
+    .band { fill:#f8fafc; stroke:#e2e8f0; stroke-width:1; }
+    .bl   { font-size:10px; font-weight:700; letter-spacing:.6px; fill:#475569; }
+    .note { fill:#eef2ff; stroke:#c7d2fe; stroke-width:1; }
+    .nl   { font-size:10px; font-weight:600; fill:#3730a3; }
+    .badge{ fill:#4f46e5; }
+    .bn   { font-size:9px; font-weight:700; fill:#ffffff; }
+  </style>
+
+  <rect x="0" y="0" width="1560" height="792" fill="#ffffff"/>
+
+  <text class="h1" x="32" y="44">Settlement Detection</text>
+  <text class="h2" x="32" y="64">Two parallel paths after a signed Solana payment. WebSocket = instant UX; webhook = authoritative settlement. Base uses the webhook path only.</text>
+  <line x1="32" y1="80" x2="1528" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- path bands -->
+  <rect class="band" x="24" y="244" width="1512" height="176" rx="10"/>
+  <text class="bl" x="40" y="264">PATH 1 · INSTANT UX — Helius WebSocket</text>
+  <rect class="band" x="24" y="436" width="1512" height="312" rx="10"/>
+  <text class="bl" x="40" y="456">PATH 2 · AUTHORITATIVE SETTLEMENT — Helius webhook</text>
+
+  <!-- lifelines -->
+  <line class="life" x1="110"  y1="148" x2="110"  y2="760"/>
+  <line class="life" x1="300"  y1="148" x2="300"  y2="760"/>
+  <line class="life" x1="490"  y1="148" x2="490"  y2="760"/>
+  <line class="life" x1="700"  y1="148" x2="700"  y2="760"/>
+  <line class="life" x1="910"  y1="148" x2="910"  y2="760"/>
+  <line class="life" x1="1110" y1="148" x2="1110" y2="760"/>
+  <line class="life" x1="1310" y1="148" x2="1310" y2="760"/>
+  <line class="life" x1="1470" y1="148" x2="1470" y2="760"/>
+
+  <!-- actors -->
+  <g filter="url(#sh)">
+    <rect class="actor" x="30"   y="100" width="160" height="46" rx="8"/>
+    <rect class="actor" x="220"  y="100" width="160" height="46" rx="8"/>
+    <rect class="actor" x="410"  y="100" width="160" height="46" rx="8"/>
+    <rect class="actor" x="608"  y="100" width="184" height="46" rx="8"/>
+    <rect class="actor" x="830"  y="100" width="160" height="46" rx="8"/>
+    <rect class="actor" x="1014" y="100" width="192" height="46" rx="8"/>
+    <rect class="actor" x="1230" y="100" width="160" height="46" rx="8"/>
+    <rect class="actor" x="1390" y="100" width="160" height="46" rx="8"/>
+  </g>
+  <text class="an" x="110"  y="128" text-anchor="middle">Customer Wallet</text>
+  <text class="an" x="300"  y="128" text-anchor="middle">Solana</text>
+  <text class="an" x="490"  y="128" text-anchor="middle">Frontend</text>
+  <text class="an" x="700"  y="128" text-anchor="middle">/api/solana-confirm</text>
+  <text class="an" x="910"  y="128" text-anchor="middle">Helius</text>
+  <text class="an" x="1110" y="128" text-anchor="middle">/api/helius/webhook</text>
+  <text class="an" x="1310" y="128" text-anchor="middle">Backend</text>
+  <text class="an" x="1470" y="128" text-anchor="middle">DynamoDB</text>
+
+  <!-- 1 -->
+  <text class="ml" x="205" y="188" text-anchor="middle">Sign and submit USDC transfer</text>
+  <path class="msg" d="M118,196 L300,196"/>
+  <circle class="badge" cx="110" cy="196" r="8"/><text class="bn" x="110" y="199" text-anchor="middle">1</text>
+
+  <!-- note -->
+  <rect class="note" x="330" y="212" width="320" height="22" rx="6"/>
+  <text class="nl" x="490" y="227" text-anchor="middle">Two parallel paths begin</text>
+
+  <!-- 2 -->
+  <text class="ml" x="595" y="280" text-anchor="middle">POST { signature }</text>
+  <path class="msg" d="M498,288 L700,288"/>
+  <circle class="badge" cx="490" cy="288" r="8"/><text class="bn" x="490" y="291" text-anchor="middle">2</text>
+
+  <!-- 3 -->
+  <text class="ml" x="805" y="316" text-anchor="middle">signatureSubscribe (WSS)</text>
+  <path class="msg" d="M708,324 L910,324"/>
+  <circle class="badge" cx="700" cy="324" r="8"/><text class="bn" x="700" y="327" text-anchor="middle">3</text>
+
+  <!-- 4 return -->
+  <text class="ml" x="805" y="352" text-anchor="middle">confirmed (~2-3s)</text>
+  <path class="ret" d="M902,360 L708,360"/>
+  <circle class="badge" cx="910" cy="360" r="8"/><text class="bn" x="910" y="363" text-anchor="middle">4</text>
+
+  <!-- 5 return -->
+  <text class="ml" x="595" y="388" text-anchor="middle">{ status: confirmed }</text>
+  <path class="ret" d="M692,396 L498,396"/>
+  <circle class="badge" cx="700" cy="396" r="8"/><text class="bn" x="700" y="399" text-anchor="middle">5</text>
+
+  <!-- 6 return -->
+  <text class="ml" x="300" y="404" text-anchor="middle">Payment confirmed on-chain</text>
+  <path class="ret" d="M482,412 L118,412"/>
+  <circle class="badge" cx="490" cy="412" r="8"/><text class="bn" x="490" y="415" text-anchor="middle">6</text>
+
+  <!-- 7 async -->
+  <text class="ml" x="605" y="472" text-anchor="middle">Transaction finalized</text>
+  <path class="ret" d="M308,480 L910,480"/>
+  <circle class="badge" cx="300" cy="480" r="8"/><text class="bn" x="300" y="483" text-anchor="middle">7</text>
+
+  <!-- 8 -->
+  <text class="ml" x="1010" y="508" text-anchor="middle">Webhook POST (tx details)</text>
+  <path class="msg" d="M918,516 L1110,516"/>
+  <circle class="badge" cx="910" cy="516" r="8"/><text class="bn" x="910" y="519" text-anchor="middle">8</text>
+
+  <!-- 9 -->
+  <text class="ml" x="1210" y="544" text-anchor="middle">Forward settlement event</text>
+  <path class="msg" d="M1118,552 L1310,552"/>
+  <circle class="badge" cx="1110" cy="552" r="8"/><text class="bn" x="1110" y="555" text-anchor="middle">9</text>
+
+  <!-- 10 -->
+  <text class="ml" x="1390" y="580" text-anchor="middle">GetItem (consistent read)</text>
+  <path class="msg" d="M1318,588 L1470,588"/>
+  <circle class="badge" cx="1310" cy="588" r="8"/><text class="bn" x="1310" y="591" text-anchor="middle">10</text>
+
+  <!-- 11 self -->
+  <text class="ml" x="1310" y="620" text-anchor="middle">validate: chain · recipient · amount · mint · reference</text>
+  <path class="msg" d="M1310,628 h44 v16 h-44"/>
+  <circle class="badge" cx="1310" cy="626" r="8"/><text class="bn" x="1310" y="629" text-anchor="middle">11</text>
+
+  <!-- 12 -->
+  <text class="ml" x="1390" y="668" text-anchor="middle">TransactWriteItems</text>
+  <path class="msg" d="M1318,676 L1470,676"/>
+  <circle class="badge" cx="1310" cy="676" r="8"/><text class="bn" x="1310" y="679" text-anchor="middle">12</text>
+
+  <!-- 13 return -->
+  <text class="ml" x="1390" y="704" text-anchor="middle">Atomic commit</text>
+  <path class="ret" d="M1462,712 L1318,712"/>
+  <circle class="badge" cx="1470" cy="712" r="8"/><text class="bn" x="1470" y="715" text-anchor="middle">13</text>
+
+  <!-- 14 return -->
+  <text class="ml" x="1210" y="732" text-anchor="middle">Settlement confirmed</text>
+  <path class="ret" d="M1302,740 L1118,740"/>
+  <circle class="badge" cx="1310" cy="740" r="8"/><text class="bn" x="1310" y="743" text-anchor="middle">14</text>
+</svg>

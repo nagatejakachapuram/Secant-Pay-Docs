@@ -1,0 +1,99 @@
+<svg viewBox="0 0 1060 600" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
+  <title>Payment creation sequence</title>
+  <desc>Sequence: Merchant creates a payment request, Frontend posts to Backend, Backend validates and builds settlement data, writes the invoice to DynamoDB, and returns the invoice and payment link.</desc>
+
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.13"/>
+    </filter>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="ard" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <style>
+    .h1   { font-size:19px; font-weight:700; fill:#0f172a; }
+    .h2   { font-size:11px; font-weight:400; fill:#64748b; }
+    .actor{ fill:#ffffff; stroke:#0f172a; stroke-width:1.4; }
+    .an   { font-size:12px; font-weight:600; fill:#0f172a; }
+    .life { stroke:#cbd5e1; stroke-width:1.2; stroke-dasharray:3 4; }
+    .msg  { stroke:#475569; stroke-width:1.5; fill:none; marker-end:url(#ar); }
+    .ret  { stroke:#94a3b8; stroke-width:1.3; fill:none; stroke-dasharray:5 4; marker-end:url(#ard); }
+    .ml   { font-size:10px; font-weight:500; fill:#334155; }
+    .badge{ fill:#4f46e5; }
+    .bn   { font-size:9px; font-weight:700; fill:#ffffff; }
+  </style>
+
+  <rect x="0" y="0" width="1060" height="600" fill="#ffffff"/>
+
+  <text class="h1" x="32" y="44">Payment Creation</text>
+  <text class="h2" x="32" y="64">Invoice creation flow — Merchant → Frontend → Backend → DynamoDB.</text>
+  <line x1="32" y1="80" x2="1028" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- lifelines -->
+  <line class="life" x1="180" y1="148" x2="180" y2="556"/>
+  <line class="life" x1="450" y1="148" x2="450" y2="556"/>
+  <line class="life" x1="720" y1="148" x2="720" y2="556"/>
+  <line class="life" x1="960" y1="148" x2="960" y2="556"/>
+
+  <!-- actors -->
+  <g filter="url(#sh)">
+    <rect class="actor" x="105" y="100" width="150" height="46" rx="8"/>
+    <rect class="actor" x="375" y="100" width="150" height="46" rx="8"/>
+    <rect class="actor" x="645" y="100" width="150" height="46" rx="8"/>
+    <rect class="actor" x="885" y="100" width="150" height="46" rx="8"/>
+  </g>
+  <text class="an" x="180" y="128" text-anchor="middle">Merchant</text>
+  <text class="an" x="450" y="128" text-anchor="middle">Frontend</text>
+  <text class="an" x="720" y="128" text-anchor="middle">Backend</text>
+  <text class="an" x="960" y="128" text-anchor="middle">DynamoDB</text>
+
+  <!-- 1 -->
+  <text class="ml" x="316" y="188" text-anchor="middle">Create payment request (amount, chain)</text>
+  <path class="msg" d="M188,196 L450,196"/>
+  <circle class="badge" cx="180" cy="196" r="8"/><text class="bn" x="180" y="199" text-anchor="middle">1</text>
+
+  <!-- 2 -->
+  <text class="ml" x="585" y="232" text-anchor="middle">POST /api/payment/initiate</text>
+  <path class="msg" d="M458,240 L720,240"/>
+  <circle class="badge" cx="450" cy="240" r="8"/><text class="bn" x="450" y="243" text-anchor="middle">2</text>
+
+  <!-- 3 self -->
+  <text class="ml" x="752" y="282" text-anchor="start">validate request · generate invoice ID</text>
+  <path class="msg" d="M720,288 h42 v16 h-42"/>
+  <circle class="badge" cx="720" cy="286" r="8"/><text class="bn" x="720" y="289" text-anchor="middle">3</text>
+
+  <!-- 4 self -->
+  <text class="ml" x="752" y="330" text-anchor="start">build settlement data (Solana Pay URL / Base hash)</text>
+  <path class="msg" d="M720,336 h42 v16 h-42"/>
+  <circle class="badge" cx="720" cy="334" r="8"/><text class="bn" x="720" y="337" text-anchor="middle">4</text>
+
+  <!-- 5 -->
+  <text class="ml" x="840" y="378" text-anchor="middle">PutItem · conditional (no duplicate)</text>
+  <path class="msg" d="M728,386 L960,386"/>
+  <circle class="badge" cx="720" cy="386" r="8"/><text class="bn" x="720" y="389" text-anchor="middle">5</text>
+
+  <!-- 6 return -->
+  <text class="ml" x="844" y="420" text-anchor="middle">Success</text>
+  <path class="ret" d="M952,428 L728,428"/>
+  <circle class="badge" cx="960" cy="428" r="8"/><text class="bn" x="960" y="431" text-anchor="middle">6</text>
+
+  <!-- 7 return -->
+  <text class="ml" x="585" y="462" text-anchor="middle">Invoice response (ID, settlement data, expiry)</text>
+  <path class="ret" d="M712,470 L458,470"/>
+  <circle class="badge" cx="720" cy="470" r="8"/><text class="bn" x="720" y="473" text-anchor="middle">7</text>
+
+  <!-- 8 return -->
+  <text class="ml" x="316" y="504" text-anchor="middle">QR code + payment link</text>
+  <path class="ret" d="M442,512 L188,512"/>
+  <circle class="badge" cx="450" cy="512" r="8"/><text class="bn" x="450" y="515" text-anchor="middle">8</text>
+
+  <!-- lifeline end bars -->
+  <line x1="160" y1="556" x2="200" y2="556" stroke="#cbd5e1" stroke-width="3"/>
+  <line x1="430" y1="556" x2="470" y2="556" stroke="#cbd5e1" stroke-width="3"/>
+  <line x1="700" y1="556" x2="740" y2="556" stroke="#cbd5e1" stroke-width="3"/>
+  <line x1="940" y1="556" x2="980" y2="556" stroke="#cbd5e1" stroke-width="3"/>
+</svg>

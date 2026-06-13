@@ -65,66 +65,13 @@ The SDK provides a programmatic interface for external applications to create pa
 
 ### Payment Creation
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','actorBkg':'#ffffff','actorBorder':'#475569','actorTextColor':'#1e293b','actorLineColor':'#cbd5e1','signalColor':'#475569','signalTextColor':'#1e293b','noteBkgColor':'#f8fafc','noteBorderColor':'#cbd5e1','noteTextColor':'#334155','activationBkgColor':'#f1f5f9','activationBorderColor':'#94a3b8','sequenceNumberColor':'#ffffff'}}}%%
-sequenceDiagram
-  autonumber
-  participant M as Merchant
-  participant F as Frontend
-  participant B as Backend
-  participant DB as DynamoDB
-
-  M->>F: Create payment request (amount, chain)
-  F->>B: POST /api/payment/initiate
-  B->>B: Validate request, generate invoice ID
-  B->>B: Build settlement data (Solana Pay URL or Base hash)
-  B->>DB: PutItem (conditional: no duplicate)
-  DB-->>B: Success
-  B-->>F: Invoice response (ID, settlement data, expiry)
-  F-->>M: QR code + payment link
-```
+![Payment creation sequence](assets/payment-creation.svg)
 
 ### Settlement Detection
 
 Two complementary paths run in parallel after a Solana payment is signed. The WebSocket path delivers instant UX feedback; the webhook path is the authoritative settlement mechanism.
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','actorBkg':'#ffffff','actorBorder':'#475569','actorTextColor':'#1e293b','actorLineColor':'#cbd5e1','signalColor':'#475569','signalTextColor':'#1e293b','noteBkgColor':'#f8fafc','noteBorderColor':'#cbd5e1','noteTextColor':'#334155','activationBkgColor':'#f1f5f9','activationBorderColor':'#94a3b8','sequenceNumberColor':'#ffffff'}}}%%
-sequenceDiagram
-  autonumber
-  participant C as Customer Wallet
-  participant Chain as Solana
-  participant F as Frontend
-  participant Confirm as /api/solana-confirm
-  participant H as Helius
-  participant Webhook as /api/helius/webhook
-  participant B as Backend
-  participant DB as DynamoDB
-
-  C->>Chain: Sign and submit USDC transfer
-  Note over F: Two parallel paths begin
-
-  rect rgb(248, 250, 252)
-  Note right of F: Path 1 — Instant UX (WebSocket)
-  F->>Confirm: POST { signature }
-  Confirm->>H: signatureSubscribe (WSS)
-  H-->>Confirm: confirmed (~2-3s)
-  Confirm-->>F: { status: confirmed }
-  F-->>C: Payment confirmed on-chain
-  end
-
-  rect rgb(241, 245, 249)
-  Note right of H: Path 2 — Authoritative Settlement (Webhook)
-  Chain-->>H: Transaction finalized
-  H->>Webhook: Webhook POST (tx details)
-  Webhook->>B: Forward settlement event
-  B->>DB: GetItem (invoice, consistent read)
-  B->>B: Validate: chain, recipient, asset, amount, reference
-  B->>DB: TransactWriteItems (marker + invoice update)
-  DB-->>B: Atomic commit
-  B-->>Webhook: Settlement confirmed
-  end
-```
+![Settlement detection sequence](assets/settlement-detection.svg)
 
 For Base payments, the flow uses only the webhook path — the WebSocket confirmation is Solana-specific.
 
