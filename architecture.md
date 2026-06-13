@@ -60,7 +60,7 @@ Key guarantees:
 
 ### SDK — TypeScript (Phase 2)
 
-The SDK provides a programmatic interface for external applications to create payment sessions, poll status, verify webhooks, and embed checkout components. See [Phase 2: Growth Rails](./phase-2-growth-rails.md) for full SDK scope.
+The SDK provides a programmatic interface for external applications to create payment sessions, poll status, verify webhooks, and embed checkout components. See [Phase 2: Programmable Payments](./phase-2-programmable-payments.md) for full SDK scope.
 
 ## Data Flow
 
