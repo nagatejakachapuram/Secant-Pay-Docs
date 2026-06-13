@@ -1,0 +1,86 @@
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
+  <title>Invoice lifecycle state machine</title>
+  <desc>An invoice starts PENDING when created, then transitions to SETTLED on valid settlement, EXPIRED after the 30-minute window, or FAILED on validation failure. Each terminal state is final.</desc>
+
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.13"/>
+    </filter>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arA" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4f46e5"/>
+    </marker>
+  </defs>
+
+  <style>
+    .h1   { font-size:19px; font-weight:700; fill:#0f172a; }
+    .h2   { font-size:11px; font-weight:400; fill:#64748b; }
+    .card { fill:#ffffff; stroke:#cbd5e1; stroke-width:1; }
+    .core { fill:#f8fafc; stroke:#0f172a; stroke-width:1.5; }
+    .st   { font-size:14px; font-weight:700; fill:#0f172a; letter-spacing:.5px; }
+    .ss   { font-size:9px; font-weight:400; fill:#64748b; }
+    .e    { stroke:#475569; stroke-width:1.5; fill:none; marker-end:url(#ar); }
+    .ep   { stroke:#4f46e5; stroke-width:1.7; fill:none; marker-end:url(#arA); }
+    .tl   { font-size:9.5px; font-weight:500; fill:#334155; }
+    .tlp  { font-size:9.5px; font-weight:600; fill:#4f46e5; }
+    .lg   { font-size:9.5px; fill:#334155; }
+  </style>
+
+  <rect x="0" y="0" width="960" height="500" fill="#ffffff"/>
+
+  <text class="h1" x="32" y="44">Invoice Lifecycle</text>
+  <text class="h2" x="32" y="64">States and transitions of an invoice. Each terminal state is final; settlement is the only success path.</text>
+  <line x1="32" y1="80" x2="928" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- start -->
+  <circle cx="480" cy="120" r="7" fill="#0f172a"/>
+  <path class="e" d="M480,127 L480,156"/>
+  <text class="tl" x="492" y="146" text-anchor="start">invoice created</text>
+
+  <!-- PENDING -->
+  <g filter="url(#sh)"><rect class="core" x="392" y="158" width="176" height="58" rx="10"/></g>
+  <text class="st" x="480" y="184" text-anchor="middle">PENDING</text>
+  <text class="ss" x="480" y="200" text-anchor="middle">awaiting payment</text>
+
+  <!-- transitions to terminal states -->
+  <path class="ep" d="M408,216 C320,256 230,262 210,316"/>
+  <text class="tlp" x="252" y="262" text-anchor="middle">valid settlement received</text>
+  <path class="e" d="M480,216 L480,316"/>
+  <text class="tl" x="492" y="270" text-anchor="start">30-minute expiry elapsed</text>
+  <path class="e" d="M552,216 C640,256 730,262 750,316"/>
+  <text class="tl" x="712" y="262" text-anchor="middle">settlement validation failed</text>
+
+  <!-- terminal states -->
+  <g filter="url(#sh)">
+    <rect class="card" x="110" y="318" width="200" height="58" rx="10"/>
+    <rect class="card" x="380" y="318" width="200" height="58" rx="10"/>
+    <rect class="card" x="650" y="318" width="200" height="58" rx="10"/>
+  </g>
+  <text class="st" x="210" y="344" text-anchor="middle">SETTLED</text>
+  <text class="ss" x="210" y="360" text-anchor="middle">payment confirmed on-chain</text>
+  <text class="st" x="480" y="344" text-anchor="middle">EXPIRED</text>
+  <text class="ss" x="480" y="360" text-anchor="middle">window elapsed unpaid</text>
+  <text class="st" x="750" y="344" text-anchor="middle">FAILED</text>
+  <text class="ss" x="750" y="360" text-anchor="middle">validation failed</text>
+
+  <!-- terminal -> final markers -->
+  <path class="e" d="M210,376 L210,402"/>
+  <path class="e" d="M480,376 L480,402"/>
+  <path class="e" d="M750,376 L750,402"/>
+  <circle cx="210" cy="416" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/><circle cx="210" cy="416" r="4.5" fill="#0f172a"/>
+  <circle cx="480" cy="416" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/><circle cx="480" cy="416" r="4.5" fill="#0f172a"/>
+  <circle cx="750" cy="416" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/><circle cx="750" cy="416" r="4.5" fill="#0f172a"/>
+
+  <!-- legend -->
+  <rect x="24" y="446" width="912" height="40" rx="10" fill="#fbfcfe" stroke="#eef1f5"/>
+  <circle cx="50" cy="466" r="6" fill="#0f172a"/>
+  <text class="lg" x="64" y="470">start</text>
+  <circle cx="138" cy="466" r="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.4"/><circle cx="138" cy="466" r="3.5" fill="#0f172a"/>
+  <text class="lg" x="152" y="470">terminal (final)</text>
+  <line x1="300" y1="466" x2="338" y2="466" class="e"/>
+  <text class="lg" x="348" y="470">transition</text>
+  <line x1="460" y1="466" x2="498" y2="466" class="ep"/>
+  <text class="lg" x="508" y="470">success path</text>
+</svg>
