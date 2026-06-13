@@ -98,4 +98,4 @@ Independent security review of the backend API and payment infrastructure — th
 - AWS IAM and DynamoDB access-policy review (least-privilege per Lambda).
 - Solana Pay URL construction and SPL-transfer parameter validation.
 - Fee-payer relay and gasless-sponsorship paths from Phase 2.
-- Authentication on the merchant-settings endpoint (currently unauthenticated — confirm hardened before audit).
+- Merchant-settings wallet-signature authentication (Solana ed25519 / EVM EIP-191 ownership proof, timestamp-bounded against replay).

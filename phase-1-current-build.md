@@ -87,6 +87,7 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 ## API Security
 
 - Per-endpoint authentication: bearer token on invoice initiation, HMAC signature on the settlement webhook, constant-time static bearer on the Helius webhook, RSA signature on the Zerion webhook. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only payable data and build unsigned transactions the payer signs.
+- Wallet-owned account settings: reading or writing a merchant profile requires a fresh wallet-ownership signature (Solana ed25519 / EVM EIP-191), and the merchant dashboard keeps the profile blurred until the wallet verifies.
 - Strict JSON schema enforcement — `DisallowUnknownFields()` rejects payloads with unexpected fields.
 - Provider API keys isolated to server-side Next.js API routes, never exposed to browser.
 - RPC proxy with response sanitization to prevent API key leakage through error messages.

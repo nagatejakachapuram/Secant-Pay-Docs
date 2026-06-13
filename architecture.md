@@ -103,7 +103,7 @@ Settlement is atomic. The DynamoDB transaction either succeeds completely (marke
 
 | Control | Implementation |
 |---------|---------------|
-| Authentication | Per-endpoint: invoice initiation requires a bearer token; the settlement webhook uses an HMAC signature; the Helius webhook uses a constant-time static bearer; the Zerion webhook uses RSA signature verification; Dialect request sending is server-side and uses backend-held credentials. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening). |
+| Authentication | Per-endpoint: invoice initiation requires a bearer token; the settlement webhook uses an HMAC signature; the Helius webhook uses a constant-time static bearer; the Zerion webhook uses RSA signature verification; Dialect request sending is server-side and uses backend-held credentials. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings requires a wallet-ownership signature (Solana ed25519 or EVM EIP-191) bound to a 10-minute timestamp, so a caller can only read or write its own profile. |
 | Input validation | `DisallowUnknownFields()` rejects unexpected JSON fields |
 | API key isolation | Provider API keys stay server-side in Next.js API routes, never sent to browser |
 | Response sanitization | RPC proxy scrubs upstream URLs and API key fragments from error responses |
