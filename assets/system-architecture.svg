@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1060 900" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
   <title>Secant Pay system architecture</title>
-  <desc>Layered architecture across seven tiers (Client, Frontend, Wallets, Backend, Storage, External Providers, Settlement Chains) with a numbered request lifecycle, protocol-labeled connectors, and first-party services emphasized.</desc>
+  <desc>Layered architecture across seven tiers (Client, Frontend, Wallets, Backend, Storage, External Providers, Settlement Chains) with invoice creation, Blink building, Dialect payment requests, Helius settlement, and first-party services emphasized.</desc>
 
   <defs>
     <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
@@ -78,7 +78,7 @@
     <rect class="card" x="786" y="114" width="240" height="56" rx="8"/>
   </g>
   <text class="nt" x="248" y="139" text-anchor="middle">Merchant Dashboard</text>
-  <text class="ns" x="248" y="153" text-anchor="middle">invoices · history · settings</text>
+  <text class="ns" x="248" y="153" text-anchor="middle">invoices · inbox · history</text>
   <text class="nt" x="460" y="139" text-anchor="middle">Scan &amp; Pay Terminal</text>
   <text class="ns" x="460" y="153" text-anchor="middle">point-of-sale · QR</text>
   <text class="nt" x="672" y="139" text-anchor="middle">Secant SDK</text>
@@ -94,7 +94,7 @@
   <text class="nt" x="365" y="238" text-anchor="middle">App Router</text>
   <text class="ns" x="365" y="252" text-anchor="middle">Dashboard · Checkout · Invoices · Swap · PoS · /pay</text>
   <text class="nt" x="811" y="238" text-anchor="middle">API Routes</text>
-  <text class="ns" x="811" y="252" text-anchor="middle">provider proxy · action proxy · webhook · RPC proxy</text>
+  <text class="ns" x="811" y="252" text-anchor="middle">provider proxy · action proxy · alerts · webhook · RPC proxy</text>
 
   <!-- L3 wallets -->
   <g filter="url(#sh)">
@@ -130,22 +130,25 @@
 
   <!-- L6 providers -->
   <g filter="url(#sh)">
-    <rect class="card" x="150" y="584" width="166" height="56" rx="8"/>
-    <rect class="card" x="334" y="584" width="166" height="56" rx="8"/>
-    <rect class="card" x="518" y="584" width="166" height="56" rx="8"/>
-    <rect class="card" x="702" y="584" width="150" height="56" rx="8"/>
-    <rect class="card" x="870" y="584" width="156" height="56" rx="8"/>
+    <rect class="card" x="150" y="584" width="136" height="56" rx="8"/>
+    <rect class="card" x="304" y="584" width="136" height="56" rx="8"/>
+    <rect class="card" x="458" y="584" width="136" height="56" rx="8"/>
+    <rect class="card" x="612" y="584" width="118" height="56" rx="8"/>
+    <rect class="card" x="748" y="584" width="136" height="56" rx="8"/>
+    <rect class="card" x="902" y="584" width="124" height="56" rx="8"/>
   </g>
-  <text class="nt" x="233" y="608" text-anchor="middle">Zerion</text>
-  <text class="ns" x="233" y="622" text-anchor="middle">EVM data · swaps</text>
-  <text class="nt" x="417" y="608" text-anchor="middle">Jupiter</text>
-  <text class="ns" x="417" y="622" text-anchor="middle">SPL · checkout</text>
-  <text class="nt" x="601" y="608" text-anchor="middle">Helius</text>
-  <text class="ns" x="601" y="622" text-anchor="middle">webhook · WS confirm</text>
-  <text class="nt" x="777" y="608" text-anchor="middle">SNS</text>
-  <text class="ns" x="777" y="622" text-anchor="middle">.sol resolution</text>
-  <text class="nt" x="948" y="608" text-anchor="middle">Dialect dial.to</text>
-  <text class="ns" x="948" y="622" text-anchor="middle">Blink renderer</text>
+  <text class="nt" x="218" y="608" text-anchor="middle">Zerion</text>
+  <text class="ns" x="218" y="622" text-anchor="middle">EVM data · swaps</text>
+  <text class="nt" x="372" y="608" text-anchor="middle">Jupiter</text>
+  <text class="ns" x="372" y="622" text-anchor="middle">SPL · checkout</text>
+  <text class="nt" x="526" y="608" text-anchor="middle">Helius</text>
+  <text class="ns" x="526" y="622" text-anchor="middle">webhook · WS</text>
+  <text class="nt" x="671" y="608" text-anchor="middle">SNS</text>
+  <text class="ns" x="671" y="622" text-anchor="middle">.sol names</text>
+  <text class="nt" x="816" y="608" text-anchor="middle">Dialect Alerts</text>
+  <text class="ns" x="816" y="622" text-anchor="middle">invoice request</text>
+  <text class="nt" x="964" y="608" text-anchor="middle">dial.to</text>
+  <text class="ns" x="964" y="622" text-anchor="middle">Blink renderer</text>
 
   <!-- L7 chains -->
   <g filter="url(#sh)">
@@ -194,7 +197,7 @@
   <path class="e" d="M150,250 L120,250 L120,584 L150,600"/>
   <text class="el" x="112" y="420" text-anchor="end" transform="rotate(-90 112 420)">keys stay server-side · HTTPS</text>
   <!-- 7 helius webhook -> API (left rail inner) -->
-  <path class="ed" d="M601,584 C601,520 138,520 138,268 L150,250"/>
+  <path class="ed" d="M526,584 C526,520 138,520 138,268 L150,250"/>
   <circle class="badge" cx="138" cy="430" r="8"/><text class="bnum" x="138" y="433" text-anchor="middle">7</text>
   <text class="elp" x="146" y="500" transform="rotate(-90 146 500)">settlement webhook</text>
 
@@ -213,8 +216,10 @@
   <circle class="badge" cx="980" cy="600" r="8"/><text class="bnum" x="980" y="603" text-anchor="middle">6</text>
   <text class="el" x="986" y="540" text-anchor="middle" transform="rotate(-90 986 540)">verify tx · RPC</text>
 
-  <!-- dialect renders blink (annotation) -->
-  <path class="ed" d="M948,584 C948,400 1030,300 1030,180 L1006,160 L990,166"/>
+  <!-- dialect alert + renderer annotations -->
+  <path class="ed" d="M816,584 C816,510 720,500 650,476"/>
+  <text class="el" x="790" y="520" text-anchor="middle">payment request alert</text>
+  <path class="ed" d="M964,584 C964,400 1030,300 1030,180 L1006,160 L990,166"/>
   <text class="el" x="1020" y="380" text-anchor="middle" transform="rotate(-90 1020 380)">renders Blink card</text>
 
   <!-- ============ LEGEND ============ -->

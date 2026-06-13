@@ -9,6 +9,7 @@ Publish a TypeScript SDK (`@secant-pay/sdk`) that lets any developer integrate S
 SDK scope:
 
 - `createPaymentIntent(amount, chain, options)` returns an invoice object with payment URL, QR data, and status polling handle.
+- `sendPaymentRequest(invoiceId, customerWallet)` sends a wallet-addressed request through supported notification channels.
 - `getPaymentStatus(invoiceId)` returns current settlement state.
 - `verifyWebhookSignature(payload, secret)` helper for backend webhook consumers.
 - Embeddable `<SecantCheckout />` React component that renders a connect-wallet checkout flow inside any page.
@@ -18,19 +19,19 @@ SDK scope:
 
 The SDK is the foundation for Phase 3 integrations. Shopify, WooCommerce, and bot integrations will consume the SDK rather than raw API calls.
 
-## Hosted Payment Links
+## Hosted Payment Link Improvements
 
-Generate shareable payment pages that work without the merchant dashboard.
+Phase 1 already ships public invoice pay pages at `/pay/{invoice_id}`. Phase 2 expands them into merchant-branded, higher-conversion checkout pages that work without the merchant dashboard.
 
 Scope:
 
-- Public URL per invoice at `pay.secant.so/{invoice_id}`.
-- Page shows merchant name, amount, chain, QR code, and connect-wallet button.
-- Works on mobile browsers without app install.
-- Customer can pay via Solana Pay QR scan, wallet connect, or manual transfer.
+- Custom domain support such as `pay.secant.so/{invoice_id}` or merchant-owned payment domains.
+- Merchant profile: name, logo, brand color, support link, and custom message.
+- Works on mobile browsers without app install, including wallet handoff fallbacks.
+- Customer can pay via Solana Pay QR scan, wallet connect, Blink-compatible clients, or manual transfer.
 - Merchant can share links via email, social media, messaging, or embedded in websites.
-- Optional merchant branding: logo, color, and custom message.
 - Payment status updates live on the page after transaction submission.
+- Conversion and abandonment tracking for each delivery channel: QR, pay link, Blink, and notification request.
 
 ## Gasless Payments
 

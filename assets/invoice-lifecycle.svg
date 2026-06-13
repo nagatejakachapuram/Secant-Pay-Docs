@@ -1,6 +1,6 @@
 <svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
   <title>Invoice lifecycle state machine</title>
-  <desc>An invoice starts PENDING when created, then transitions to SETTLED on valid settlement, EXPIRED after the 30-minute window, or FAILED on validation failure. Each terminal state is final.</desc>
+  <desc>An invoice starts PENDING when created, can be delivered through QR, pay link, Blink, or Dialect request, then transitions to SETTLED on valid settlement, EXPIRED after the 30-minute window, or FAILED on validation failure.</desc>
 
   <defs>
     <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
@@ -23,9 +23,13 @@
     .ss   { font-size:9px; font-weight:400; fill:#64748b; }
     .e    { stroke:#475569; stroke-width:1.5; fill:none; marker-end:url(#ar); }
     .ep   { stroke:#4f46e5; stroke-width:1.7; fill:none; marker-end:url(#arA); }
+    .ed   { stroke:#94a3b8; stroke-width:1.2; fill:none; stroke-dasharray:5 4; marker-end:url(#ar); }
     .tl   { font-size:9.5px; font-weight:500; fill:#334155; }
     .tlp  { font-size:9.5px; font-weight:600; fill:#4f46e5; }
     .lg   { font-size:9.5px; fill:#334155; }
+    .note { fill:#eef2ff; stroke:#c7d2fe; stroke-width:1; }
+    .nl   { font-size:9.5px; font-weight:600; fill:#3730a3; }
+    .ns2  { font-size:8.5px; font-weight:500; fill:#4f46e5; }
   </style>
 
   <rect x="0" y="0" width="960" height="500" fill="#ffffff"/>
@@ -43,6 +47,13 @@
   <g filter="url(#sh)"><rect class="core" x="392" y="158" width="176" height="58" rx="10"/></g>
   <text class="st" x="480" y="184" text-anchor="middle">PENDING</text>
   <text class="ss" x="480" y="200" text-anchor="middle">awaiting payment</text>
+
+  <!-- delivery surfaces while pending -->
+  <g filter="url(#sh)"><rect class="note" x="628" y="142" width="244" height="82" rx="10"/></g>
+  <text class="nl" x="750" y="166" text-anchor="middle">delivery surfaces</text>
+  <text class="ns2" x="750" y="184" text-anchor="middle">wallet QR · pay link · Blink URL</text>
+  <text class="ns2" x="750" y="200" text-anchor="middle">optional Dialect request alert</text>
+  <path class="ed" d="M568,186 L628,186"/>
 
   <!-- transitions to terminal states -->
   <path class="ep" d="M408,216 C320,256 230,262 210,316"/>

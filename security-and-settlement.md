@@ -15,6 +15,7 @@ Secant is designed as a self-custodial payment product. The application coordina
 ### What Secant Does
 
 - Create payment requests with chain-specific settlement parameters.
+- Send optional customer payment request notifications for invoices.
 - Build unsigned transaction payloads for connected wallets to sign.
 - Track expected payment amounts, recipients, assets, and references.
 - Verify settlement by matching on-chain evidence against stored invoice state.
@@ -47,6 +48,17 @@ A payment is marked `SETTLED` only after the backend validates all of the follow
 | Expiry | Invoice must not have passed its 30-minute expiry window |
 
 If any field fails validation, the settlement is rejected and the invoice status is unchanged.
+
+## Request Delivery vs Settlement Authority
+
+Secant now supports several ways to deliver the same invoice to a customer:
+
+- Hosted pay page.
+- Solana Pay wallet QR.
+- Secant Blink / Solana Action URL.
+- Dialect payment request alert to a customer Solana wallet.
+
+These are delivery surfaces only. They help the customer find and open the invoice, but they do not control settlement. The invoice recipient, amount, mint, reference, and expiry are stored server-side when the invoice is created. A notification or Blink renderer cannot change those fields, and an invoice is not marked paid until the backend validates matching on-chain evidence.
 
 ## Atomic Settlement
 
@@ -85,9 +97,9 @@ stateDiagram-v2
 
 | Control | Detail |
 |---------|--------|
-| **Authentication** | Per-endpoint: bearer token on invoice initiation; HMAC signature on the settlement webhook; constant-time static bearer on the Helius webhook; RSA signature on the Zerion webhook. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening) |
+| **Authentication** | Per-endpoint: bearer token on invoice initiation; HMAC signature on the settlement webhook; constant-time static bearer on the Helius webhook; RSA signature on the Zerion webhook; server-held Dialect credentials for alert sending. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening) |
 | **Input validation** | Go `json.Decoder` with `DisallowUnknownFields()` rejects payloads containing fields not defined in the request struct |
-| **API key isolation** | Provider API keys (Zerion, Jupiter, Helius, Solana RPC) are stored as server-side environment variables. Next.js API routes proxy all provider calls — keys never appear in browser-accessible code or network responses |
+| **API key isolation** | Provider API keys (Zerion, Jupiter, Helius, Solana RPC, Dialect Alerts API key) are stored as server-side environment variables. Next.js API routes proxy all privileged provider calls — keys never appear in browser-accessible code or network responses |
 | **Response sanitization** | The Solana RPC proxy scrubs upstream URLs, origin headers, and query parameter values (potential API key fragments) from responses before returning to the client |
 | **No client-side secrets** | Only `NEXT_PUBLIC_` prefixed variables reach the browser bundle. Provider keys use non-public env vars |
 | **Error isolation** | Structured error codes returned to clients. Internal error details, stack traces, and provider responses are not leaked |
@@ -104,8 +116,9 @@ Webhook events from Helius are treated as settlement signals, not as the sole so
 
 1. Receives the webhook payload.
 2. Looks up the referenced invoice with a consistent read.
-3. Validates the payload against stored invoice state (chain, recipient, asset, amount, reference).
-4. Only then executes the atomic settlement transaction.
+3. Re-verifies the Solana transaction at confirmed commitment, matching Helius webhook timing.
+4. Validates the payload against stored invoice state (chain, recipient, asset, amount, reference).
+5. Only then executes the atomic settlement transaction.
 
 Webhook replay and duplicate delivery are handled by the settlement marker — if the marker already exists, the duplicate webhook is safely rejected without modifying invoice state.
 
@@ -141,3 +154,4 @@ Testnet mode uses Base Sepolia and Solana Devnet. Settlement detection on Solana
 | Chain and asset display | Active chain and token shown in every checkout screen |
 | Error states | Wrong chain, insufficient balance, expired invoice, and same-token swap errors handled with user-facing messages |
 | Consistent reads | Settlement validation reads use `ConsistentRead: true` |
+| Notification boundary | Dialect alerts can deliver invoice links, but cannot mark invoices paid or modify payment terms |

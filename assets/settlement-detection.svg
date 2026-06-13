@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1560 792" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
   <title>Settlement detection sequence</title>
-  <desc>Two parallel paths after a signed Solana payment: Path 1 delivers instant UX via Helius WebSocket confirmation; Path 2 is the authoritative settlement via the Helius webhook validated by the backend and written atomically to DynamoDB.</desc>
+  <desc>Two parallel paths after a signed Solana payment: Path 1 delivers instant UX via Helius WebSocket confirmation; Path 2 is the authoritative settlement via the Helius webhook, re-verified at confirmed commitment by the backend and written atomically to DynamoDB.</desc>
 
   <defs>
     <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
@@ -34,7 +34,7 @@
   <rect x="0" y="0" width="1560" height="792" fill="#ffffff"/>
 
   <text class="h1" x="32" y="44">Settlement Detection</text>
-  <text class="h2" x="32" y="64">Two parallel paths after a signed Solana payment. WebSocket = instant UX; webhook = authoritative settlement. Base uses the webhook path only.</text>
+  <text class="h2" x="32" y="64">Two parallel paths after a signed Solana payment. WebSocket = instant UX; webhook + backend validation = authoritative settlement.</text>
   <line x1="32" y1="80" x2="1528" y2="80" stroke="#e2e8f0" stroke-width="1"/>
 
   <!-- path bands -->
@@ -108,7 +108,7 @@
   <circle class="badge" cx="490" cy="412" r="8"/><text class="bn" x="490" y="415" text-anchor="middle">6</text>
 
   <!-- 7 async -->
-  <text class="ml" x="605" y="472" text-anchor="middle">Transaction finalized</text>
+  <text class="ml" x="605" y="472" text-anchor="middle">Helius observes confirmed transaction</text>
   <path class="ret" d="M308,480 L910,480"/>
   <circle class="badge" cx="300" cy="480" r="8"/><text class="bn" x="300" y="483" text-anchor="middle">7</text>
 
@@ -128,7 +128,7 @@
   <circle class="badge" cx="1310" cy="588" r="8"/><text class="bn" x="1310" y="591" text-anchor="middle">10</text>
 
   <!-- 11 self -->
-  <text class="ml" x="1310" y="620" text-anchor="middle">validate: chain · recipient · amount · mint · reference</text>
+  <text class="ml" x="1310" y="620" text-anchor="middle">validate: confirmed tx · recipient · amount · mint · reference</text>
   <path class="msg" d="M1310,628 h44 v16 h-44"/>
   <circle class="badge" cx="1310" cy="626" r="8"/><text class="bn" x="1310" y="629" text-anchor="middle">11</text>
 

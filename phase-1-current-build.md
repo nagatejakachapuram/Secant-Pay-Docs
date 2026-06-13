@@ -38,13 +38,18 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 ## Invoices
 
 - Invoice creation with amount, chain, and recipient configuration.
+- Customer wallet request field for Solana invoices. When supplied, Secant creates the invoice and sends a Dialect payment request notification to the customer wallet.
 - Optional memo field for tagging invoices with context (company name, project, purpose). Memo is stored with the invoice and displayed on the invoice list, payment link, and Blink card.
 - Unique invoice ID generation (`inv_` + cryptographically random hex).
 - Base payment links for EVM USDC checkout.
 - Solana payment links for Solana Pay checkout.
 - Secant Blinks: a first-party Solana Action endpoint exposing invoice metadata and building the payment transaction in the Secant backend. Invoices unfurl as payable cards in compatible clients (Secant's own `/pay` checkout, native wallets, and Dialect `dial.to` as the shareable web renderer). Only the payer account is caller-supplied — recipient, amount, mint, and reference come from the stored invoice. When a memo is set, it appears in the Blink title and description.
+- Dialect Alerts integration for customer-addressed payment requests. The backend sends an in-app alert containing the invoice context and pay link; customers must be subscribed through Dialect-compatible inbox behavior for delivery.
+- Dialect inbox in the Secant dashboard notification bell, including a mobile-safe bottom-sheet layout for reviewing received requests.
 - Copy and share actions for payment links.
+- Copy Blink URL action for Solana invoices. Blink rendering depends on the receiving client or renderer; the Secant backend remains the transaction builder.
 - Invoice status tracking: PENDING, SETTLED, EXPIRED, FAILED.
+- Settled invoices remain visible in the merchant list and cannot be hidden from the local invoice list UI.
 - 30-minute invoice expiry enforced at both creation and settlement time.
 
 ## Swap & Bridge
@@ -60,6 +65,7 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 - Jupiter checkout routing: customers pay with SOL or supported SPL tokens, merchant receives USDC.
 - Solana Pay URL generation with reference keypairs and memo support.
 - Helius webhook endpoint for native Solana settlement detection on both devnet and mainnet.
+- Helius webhook settlement verified on mainnet with invoice status changing from `PENDING` to `SETTLED` after payment.
 - SNS `.sol` recipient name resolution.
 - SPL token transfers through `@solana/spl-token` with proper associated token account handling.
 - Compute budget priority fee support for reliable transaction landing under congestion.

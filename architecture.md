@@ -28,9 +28,9 @@ The frontend serves as both the merchant interface and the API gateway. Built on
 | Dashboard | Portfolio balances, asset breakdown, activity feed across connected wallets |
 | Terminal | USDC checkout with chain selection, QR generation, payment status polling |
 | Scan & Pay | Point-of-sale interface with QR scanning, amount keypad, balance validation |
-| Invoices | Invoice creation, payment link generation, Blinks integration, status tracking |
+| Invoices | Invoice creation, payment link generation, optional customer wallet request, Blinks integration, status tracking |
 | Swap & Bridge | Token routing UI with slippage controls, powered by Jupiter and Zerion |
-| API Routes | Server-side proxies for provider APIs, webhook receivers, Actions endpoints, and real-time transaction confirmation via Helius WebSocket. API keys never reach the browser — all provider calls route through server-side handlers. |
+| API Routes | Server-side proxies for provider APIs, webhook receivers, Actions endpoints, Dialect request forwarding, and real-time transaction confirmation via Helius WebSocket. API keys never reach the browser — all provider calls route through server-side handlers. |
 
 ### Backend — Go
 
@@ -39,6 +39,7 @@ The backend is a stateless service responsible for invoice lifecycle management 
 | Component | Responsibility |
 |-----------|---------------|
 | Invoice Initiator | Validates merchant requests, generates cryptographically random invoice IDs (`inv_` + 16 bytes hex), converts USD amounts to atomic units, builds chain-specific settlement data (Solana Pay URL with reference keypair, or Base invoice hash), sets 30-minute expiry |
+| Payment Request Notifier | Sends optional Dialect Alerts to a customer Solana wallet after invoice creation. Notification delivery is separate from settlement and never changes invoice payment parameters |
 | Settlement Receiver | Validates inbound webhook payloads against stored invoice state — chain, recipient, asset, amount, reference/signature must all match. Settles atomically via DynamoDB transactions |
 | HTTP Handlers | Per-endpoint authentication (see API Security below), strict JSON schema enforcement via `DisallowUnknownFields()`, structured error responses with typed error codes |
 
@@ -66,6 +67,8 @@ The SDK provides a programmatic interface for external applications to create pa
 ### Payment Creation
 
 ![Payment creation sequence](assets/payment-creation.svg)
+
+Payment creation can return only a shareable pay link, or it can also send a Dialect request when the merchant supplies a customer Solana wallet. The notification is a delivery channel for the same invoice; it does not create a different settlement path.
 
 ### Settlement Detection
 
@@ -102,13 +105,15 @@ Secant does not hold user funds. A payment is considered settled only after on-c
 | Reference | Solana: reference pubkey matches. Base: tx hash is valid |
 | Status | Invoice is `PENDING` and not expired |
 
+Dialect notifications, Blink renderers, QR codes, and hosted payment links are all request surfaces. None of them are settlement authority. The backend marks an invoice `SETTLED` only after the chain evidence matches the stored invoice record.
+
 Settlement is atomic. The DynamoDB transaction either succeeds completely (marker created + invoice updated) or fails completely. There is no intermediate state where an invoice is partially settled.
 
 ## API Security
 
 | Control | Implementation |
 |---------|---------------|
-| Authentication | Per-endpoint: invoice initiation requires a bearer token; the settlement webhook uses an HMAC signature; the Helius webhook uses a constant-time static bearer; the Zerion webhook uses RSA signature verification. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening). |
+| Authentication | Per-endpoint: invoice initiation requires a bearer token; the settlement webhook uses an HMAC signature; the Helius webhook uses a constant-time static bearer; the Zerion webhook uses RSA signature verification; Dialect request sending is server-side and uses backend-held credentials. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening). |
 | Input validation | `DisallowUnknownFields()` rejects unexpected JSON fields |
 | API key isolation | Provider API keys stay server-side in Next.js API routes, never sent to browser |
 | Response sanitization | RPC proxy scrubs upstream URLs and API key fragments from error responses |
@@ -122,6 +127,6 @@ Settlement is atomic. The DynamoDB transaction either succeeds completely (marke
 | Frontend | Vercel (Next.js) |
 | Backend | AWS Lambda (Go) or standalone HTTP |
 | Storage | AWS DynamoDB |
-| Webhooks | Helius (Solana), direct chain observation (Base) |
+| Notification delivery | Dialect Alerts for customer-addressed invoice requests |
 
 The backend is designed as stateless Lambda functions — each endpoint (initiate, settle, status) is independently deployable. The frontend API routes handle provider proxying and webhook ingestion at the edge.

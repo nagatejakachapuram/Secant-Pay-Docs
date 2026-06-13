@@ -2,6 +2,7 @@
 
 * [Secant Pay Docs](README.md)
 * [Product Overview](product-overview.md)
+* [How Secant Pay Works](how-it-works.md)
 * [Architecture](architecture.md)
 * [Phase 1: Current Build](phase-1-current-build.md)
 * [Phase 2: Growth Rails](phase-2-growth-rails.md)

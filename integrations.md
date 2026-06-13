@@ -1,6 +1,6 @@
 # Integrations
 
-Secant composes ecosystem-standard providers for portfolio data, swap routing, settlement detection, name resolution, and payment standards. Each integration is accessed through server-side API routes — provider keys never reach the browser.
+Secant composes ecosystem-standard providers for portfolio data, swap routing, settlement detection, name resolution, payment standards, Blinks rendering, and wallet-native notifications. Each privileged integration is accessed through server-side API routes — provider keys never reach the browser.
 
 ## Integration Map
 
@@ -69,9 +69,22 @@ The Action API is one thing; *rendering* the card is separate. Secant Blinks are
 | Native Blink clients (Phantom, Backpack, X unfurler) | Discover the action via `actions.json` and the `solana-action:` URI and render it natively. |
 | Dialect `dial.to` | A universal hosted web renderer. The invoice page's "Copy Blink" / "Open Blink" buttons wrap the Secant action URL as `dial.to/?action=solana-action:<secant-url>` so the Blink renders as a shareable card even outside native clients. |
 
-### What about Dialect?
+### Dialect as a Blink renderer
 
-Dialect (`dial.to`) is used **only as a renderer/distribution surface**, not as part of the Blink logic. There is no Dialect SDK, no Dialect-hosted action, and no Dialect dependency in the transaction path — the transaction is always built by the Secant backend. `dial.to` is the convenient "share a Blink link anywhere and it renders" wrapper; it is not a fallback for transaction building. If `dial.to` were removed, the raw `solana-action:` URL plus `actions.json` would still render in native Blink-aware wallets — only the universal web preview would be lost.
+For Blinks, Dialect (`dial.to`) is a renderer/distribution surface, not part of the transaction path. There is no Dialect-hosted action and no Dialect dependency in the transaction builder — the transaction is always built by the Secant backend. `dial.to` is the convenient "share a Blink link anywhere and it renders" wrapper; it is not a fallback for transaction building. If `dial.to` were removed, the raw `solana-action:` URL plus `actions.json` would still render in native Blink-aware wallets — only the universal web preview would be lost.
+
+## Dialect Alerts
+
+Dialect Alerts powers wallet-addressed invoice requests and the in-app notification inbox.
+
+| Capability | Usage |
+|-----------|-------|
+| Customer payment requests | When a merchant adds a customer Solana wallet while creating an invoice, Secant sends a Dialect in-app alert with the invoice context and pay link. |
+| Dashboard inbox | The notification bell in the Secant dashboard embeds a Dialect inbox so users can review payment requests and alerts from inside Secant. |
+| Wallet-based subscription | Notifications are tied to the customer's wallet identity and Dialect subscription state, not a Secant password account. |
+| Multi-channel foundation | Dialect can support in-app, email, Telegram, and push-style delivery depending on app and user configuration. Phase 1 uses the in-app request flow. |
+
+Integration: Secant keeps the Dialect API key server-side when sending alerts. The browser receives only the public client key needed to render the inbox and subscription UI. A Dialect alert is a delivery mechanism for a Secant invoice; it does not alter the recipient, amount, mint, expiry, reference, or settlement state.
 
 ## Helius
 
@@ -86,7 +99,7 @@ Helius powers native Solana settlement detection via webhooks and real-time tran
 
 Integration: Two complementary paths.
 
-**Settlement authority (webhooks):** Helius webhook POSTs to a Next.js API route, which forwards to the Go backend for settlement validation. The backend verifies the payment against stored invoice state before marking it settled. This is the authoritative settlement path.
+**Settlement authority (webhooks):** Helius webhook POSTs to a Next.js API route, which forwards to the Go backend for settlement validation. Because Helius can deliver events at confirmed commitment before finalization, the backend re-verifies the transaction at confirmed commitment and then checks it against stored invoice state before marking it settled. This is the authoritative settlement path.
 
 **Instant UX confirmation (WebSocket):** After a customer signs a Solana transaction, the frontend calls a server-side API route that opens a Helius WebSocket connection and subscribes to the transaction signature. The route returns the confirmation status within 2–3 seconds. The API key stays server-side — the browser never connects directly to Helius. If the WebSocket connection fails, the route falls back to `getSignatureStatuses` polling automatically.
 

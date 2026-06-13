@@ -1,6 +1,6 @@
-<svg viewBox="0 0 1060 600" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
-  <title>Payment creation sequence</title>
-  <desc>Sequence: Merchant creates a payment request, Frontend posts to Backend, Backend validates and builds settlement data, writes the invoice to DynamoDB, and returns the invoice and payment link.</desc>
+<svg viewBox="0 0 1060 680" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
+  <title>Payment creation and request delivery sequence</title>
+  <desc>Sequence: merchant creates an invoice, the frontend posts to the backend, backend stores the invoice, returns pay and Blink links, and optionally sends a Dialect request to a customer wallet inbox.</desc>
 
   <defs>
     <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
@@ -12,88 +12,104 @@
     <marker id="ard" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
     </marker>
+    <marker id="ara" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4f46e5"/>
+    </marker>
   </defs>
 
   <style>
     .h1   { font-size:19px; font-weight:700; fill:#0f172a; }
     .h2   { font-size:11px; font-weight:400; fill:#64748b; }
     .actor{ fill:#ffffff; stroke:#0f172a; stroke-width:1.4; }
-    .an   { font-size:12px; font-weight:600; fill:#0f172a; }
+    .an   { font-size:11px; font-weight:600; fill:#0f172a; }
     .life { stroke:#cbd5e1; stroke-width:1.2; stroke-dasharray:3 4; }
     .msg  { stroke:#475569; stroke-width:1.5; fill:none; marker-end:url(#ar); }
     .ret  { stroke:#94a3b8; stroke-width:1.3; fill:none; stroke-dasharray:5 4; marker-end:url(#ard); }
-    .ml   { font-size:10px; font-weight:500; fill:#334155; }
+    .opt  { stroke:#4f46e5; stroke-width:1.6; fill:none; marker-end:url(#ara); }
+    .ml   { font-size:9.5px; font-weight:500; fill:#334155; }
+    .mo   { font-size:9.5px; font-weight:600; fill:#4f46e5; }
     .badge{ fill:#4f46e5; }
     .bn   { font-size:9px; font-weight:700; fill:#ffffff; }
+    .note { fill:#eef2ff; stroke:#c7d2fe; stroke-width:1; }
+    .nl   { font-size:10px; font-weight:600; fill:#3730a3; }
   </style>
 
-  <rect x="0" y="0" width="1060" height="600" fill="#ffffff"/>
+  <rect x="0" y="0" width="1060" height="680" fill="#ffffff"/>
 
-  <text class="h1" x="32" y="44">Payment Creation</text>
-  <text class="h2" x="32" y="64">Invoice creation flow — Merchant → Frontend → Backend → DynamoDB.</text>
+  <text class="h1" x="32" y="44">Payment Creation + Request Delivery</text>
+  <text class="h2" x="32" y="64">Merchant creates one invoice. Secant returns QR/pay/Blink links and can optionally notify a customer wallet through Dialect Alerts.</text>
   <line x1="32" y1="80" x2="1028" y2="80" stroke="#e2e8f0" stroke-width="1"/>
 
   <!-- lifelines -->
-  <line class="life" x1="180" y1="148" x2="180" y2="556"/>
-  <line class="life" x1="450" y1="148" x2="450" y2="556"/>
-  <line class="life" x1="720" y1="148" x2="720" y2="556"/>
-  <line class="life" x1="960" y1="148" x2="960" y2="556"/>
+  <line class="life" x1="110" y1="148" x2="110" y2="620"/>
+  <line class="life" x1="290" y1="148" x2="290" y2="620"/>
+  <line class="life" x1="470" y1="148" x2="470" y2="620"/>
+  <line class="life" x1="650" y1="148" x2="650" y2="620"/>
+  <line class="life" x1="830" y1="148" x2="830" y2="620"/>
+  <line class="life" x1="980" y1="148" x2="980" y2="620"/>
 
   <!-- actors -->
   <g filter="url(#sh)">
-    <rect class="actor" x="105" y="100" width="150" height="46" rx="8"/>
-    <rect class="actor" x="375" y="100" width="150" height="46" rx="8"/>
-    <rect class="actor" x="645" y="100" width="150" height="46" rx="8"/>
-    <rect class="actor" x="885" y="100" width="150" height="46" rx="8"/>
+    <rect class="actor" x="40" y="100" width="140" height="46" rx="8"/>
+    <rect class="actor" x="220" y="100" width="140" height="46" rx="8"/>
+    <rect class="actor" x="400" y="100" width="140" height="46" rx="8"/>
+    <rect class="actor" x="580" y="100" width="140" height="46" rx="8"/>
+    <rect class="actor" x="760" y="100" width="140" height="46" rx="8"/>
+    <rect class="actor" x="925" y="100" width="110" height="46" rx="8"/>
   </g>
-  <text class="an" x="180" y="128" text-anchor="middle">Merchant</text>
-  <text class="an" x="450" y="128" text-anchor="middle">Frontend</text>
-  <text class="an" x="720" y="128" text-anchor="middle">Backend</text>
-  <text class="an" x="960" y="128" text-anchor="middle">DynamoDB</text>
+  <text class="an" x="110" y="128" text-anchor="middle">Merchant</text>
+  <text class="an" x="290" y="128" text-anchor="middle">Frontend</text>
+  <text class="an" x="470" y="128" text-anchor="middle">Backend</text>
+  <text class="an" x="650" y="128" text-anchor="middle">DynamoDB</text>
+  <text class="an" x="830" y="128" text-anchor="middle">Dialect Alerts</text>
+  <text class="an" x="980" y="128" text-anchor="middle">Customer</text>
 
   <!-- 1 -->
-  <text class="ml" x="316" y="188" text-anchor="middle">Create payment request (amount, chain)</text>
-  <path class="msg" d="M188,196 L450,196"/>
-  <circle class="badge" cx="180" cy="196" r="8"/><text class="bn" x="180" y="199" text-anchor="middle">1</text>
+  <text class="ml" x="200" y="188" text-anchor="middle">Create invoice: amount, chain, memo</text>
+  <path class="msg" d="M118,196 L290,196"/>
+  <circle class="badge" cx="110" cy="196" r="8"/><text class="bn" x="110" y="199" text-anchor="middle">1</text>
 
   <!-- 2 -->
-  <text class="ml" x="585" y="232" text-anchor="middle">POST /api/payment/initiate</text>
-  <path class="msg" d="M458,240 L720,240"/>
-  <circle class="badge" cx="450" cy="240" r="8"/><text class="bn" x="450" y="243" text-anchor="middle">2</text>
+  <text class="ml" x="380" y="232" text-anchor="middle">POST /api/payment/initiate</text>
+  <path class="msg" d="M298,240 L470,240"/>
+  <circle class="badge" cx="290" cy="240" r="8"/><text class="bn" x="290" y="243" text-anchor="middle">2</text>
 
-  <!-- 3 self -->
-  <text class="ml" x="752" y="282" text-anchor="start">validate request · generate invoice ID</text>
-  <path class="msg" d="M720,288 h42 v16 h-42"/>
-  <circle class="badge" cx="720" cy="286" r="8"/><text class="bn" x="720" y="289" text-anchor="middle">3</text>
+  <!-- 3 backend self -->
+  <text class="ml" x="502" y="282" text-anchor="start">validate · invoice ID · expiry</text>
+  <path class="msg" d="M470,288 h38 v16 h-38"/>
+  <circle class="badge" cx="470" cy="286" r="8"/><text class="bn" x="470" y="289" text-anchor="middle">3</text>
 
-  <!-- 4 self -->
-  <text class="ml" x="752" y="330" text-anchor="start">build settlement data (Solana Pay URL / Base hash)</text>
-  <path class="msg" d="M720,336 h42 v16 h-42"/>
-  <circle class="badge" cx="720" cy="334" r="8"/><text class="bn" x="720" y="337" text-anchor="middle">4</text>
+  <!-- 4 backend self -->
+  <text class="ml" x="502" y="330" text-anchor="start">build Solana Pay URL, pay link, Blink URL</text>
+  <path class="msg" d="M470,336 h38 v16 h-38"/>
+  <circle class="badge" cx="470" cy="334" r="8"/><text class="bn" x="470" y="337" text-anchor="middle">4</text>
 
-  <!-- 5 -->
-  <text class="ml" x="840" y="378" text-anchor="middle">PutItem · conditional (no duplicate)</text>
-  <path class="msg" d="M728,386 L960,386"/>
-  <circle class="badge" cx="720" cy="386" r="8"/><text class="bn" x="720" y="389" text-anchor="middle">5</text>
+  <!-- 5 store -->
+  <text class="ml" x="560" y="378" text-anchor="middle">PutItem invoice · status PENDING</text>
+  <path class="msg" d="M478,386 L650,386"/>
+  <circle class="badge" cx="470" cy="386" r="8"/><text class="bn" x="470" y="389" text-anchor="middle">5</text>
 
-  <!-- 6 return -->
-  <text class="ml" x="844" y="420" text-anchor="middle">Success</text>
-  <path class="ret" d="M952,428 L728,428"/>
-  <circle class="badge" cx="960" cy="428" r="8"/><text class="bn" x="960" y="431" text-anchor="middle">6</text>
+  <!-- optional 6 dialect -->
+  <text class="mo" x="650" y="430" text-anchor="middle">optional: customer wallet supplied</text>
+  <path class="opt" d="M478,438 C570,438 720,438 830,438"/>
+  <circle class="badge" cx="470" cy="438" r="8"/><text class="bn" x="470" y="441" text-anchor="middle">6</text>
 
-  <!-- 7 return -->
-  <text class="ml" x="585" y="462" text-anchor="middle">Invoice response (ID, settlement data, expiry)</text>
-  <path class="ret" d="M712,470 L458,470"/>
-  <circle class="badge" cx="720" cy="470" r="8"/><text class="bn" x="720" y="473" text-anchor="middle">7</text>
+  <!-- 7 deliver -->
+  <text class="mo" x="905" y="476" text-anchor="middle">in-app payment request</text>
+  <path class="opt" d="M838,484 L980,484"/>
+  <circle class="badge" cx="830" cy="484" r="8"/><text class="bn" x="830" y="487" text-anchor="middle">7</text>
 
   <!-- 8 return -->
-  <text class="ml" x="316" y="504" text-anchor="middle">QR code + payment link</text>
-  <path class="ret" d="M442,512 L188,512"/>
-  <circle class="badge" cx="450" cy="512" r="8"/><text class="bn" x="450" y="515" text-anchor="middle">8</text>
+  <text class="ml" x="560" y="522" text-anchor="middle">Invoice response: ID, expiry, QR data, pay/Blink links</text>
+  <path class="ret" d="M642,530 L478,530"/>
+  <circle class="badge" cx="650" cy="530" r="8"/><text class="bn" x="650" y="533" text-anchor="middle">8</text>
 
-  <!-- lifeline end bars -->
-  <line x1="160" y1="556" x2="200" y2="556" stroke="#cbd5e1" stroke-width="3"/>
-  <line x1="430" y1="556" x2="470" y2="556" stroke="#cbd5e1" stroke-width="3"/>
-  <line x1="700" y1="556" x2="740" y2="556" stroke="#cbd5e1" stroke-width="3"/>
-  <line x1="940" y1="556" x2="980" y2="556" stroke="#cbd5e1" stroke-width="3"/>
+  <!-- 9 return -->
+  <text class="ml" x="380" y="566" text-anchor="middle">Render invoice row + sharing controls</text>
+  <path class="ret" d="M462,574 L298,574"/>
+  <circle class="badge" cx="470" cy="574" r="8"/><text class="bn" x="470" y="577" text-anchor="middle">9</text>
+
+  <!-- note -->
+  <rect class="note" x="42" y="626" width="976" height="34" rx="10"/>
+  <text class="nl" x="530" y="647" text-anchor="middle">Dialect delivers the request; the stored invoice remains the source of truth for amount, recipient, mint, reference, expiry, and settlement state.</text>
 </svg>
