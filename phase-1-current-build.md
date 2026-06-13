@@ -42,7 +42,7 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 - Unique invoice ID generation (`inv_` + cryptographically random hex).
 - Base payment links for EVM USDC checkout.
 - Solana payment links for Solana Pay checkout.
-- Solana Actions endpoint exposing invoice metadata for Blinks — invoices unfurl as payable cards in compatible clients. When a memo is set, it appears in the Blink title and description.
+- Secant Blinks: a first-party Solana Action endpoint exposing invoice metadata and building the payment transaction in the Secant backend. Invoices unfurl as payable cards in compatible clients (Secant's own `/pay` checkout, native wallets, and Dialect `dial.to` as the shareable web renderer). Only the payer account is caller-supplied — recipient, amount, mint, and reference come from the stored invoice. When a memo is set, it appears in the Blink title and description.
 - Copy and share actions for payment links.
 - Invoice status tracking: PENDING, SETTLED, EXPIRED, FAILED.
 - 30-minute invoice expiry enforced at both creation and settlement time.
@@ -74,7 +74,7 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 
 ## API Security
 
-- Bearer token authentication on all backend endpoints.
+- Per-endpoint authentication: bearer token on invoice initiation, HMAC signature on the settlement webhook, constant-time static bearer on the Helius webhook, RSA signature on the Zerion webhook. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only payable data and build unsigned transactions the payer signs.
 - Strict JSON schema enforcement — `DisallowUnknownFields()` rejects payloads with unexpected fields.
 - Provider API keys isolated to server-side Next.js API routes, never exposed to browser.
 - RPC proxy with response sanitization to prevent API key leakage through error messages.

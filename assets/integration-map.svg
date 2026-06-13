@@ -1,0 +1,138 @@
+<svg viewBox="0 0 1060 660" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
+  <title>Secant Pay integration map</title>
+  <desc>Secant Pay first-party services (Frontend, Backend, Secant Blinks Action API) composing external ecosystem providers: Zerion for EVM, Jupiter/Helius/Solana Pay/SNS for Solana, Dialect dial.to as the external Blink renderer, and wallet connectivity. Provider keys never reach the browser.</desc>
+
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.13"/>
+    </filter>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arA" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4f46e5"/>
+    </marker>
+  </defs>
+
+  <style>
+    .lane   { fill:#f6f7fb; stroke:#e0e3ef; stroke-width:1; }
+    .grp    { fill:#fcfcfd; stroke:#eef1f5; stroke-width:1; }
+    .tab    { fill:#4f46e5; }
+    .tier   { font-size:11px; font-weight:700; letter-spacing:.8px; fill:#334155; }
+    .tsub   { font-size:8.5px; font-weight:500; fill:#94a3b8; }
+    .card   { fill:#ffffff; stroke:#cbd5e1; stroke-width:1; }
+    .core   { fill:#f8fafc; stroke:#0f172a; stroke-width:1.5; }
+    .nt     { font-size:12px; font-weight:600; fill:#0f172a; }
+    .ns     { font-size:8.5px; font-weight:400; fill:#64748b; }
+    .e      { stroke:#94a3b8; stroke-width:1.4; fill:none; marker-end:url(#ar); }
+    .ed     { stroke:#94a3b8; stroke-width:1.3; fill:none; stroke-dasharray:5 4; marker-end:url(#ar); }
+    .ep     { stroke:#4f46e5; stroke-width:1.6; fill:none; marker-end:url(#arA); }
+    .el     { font-size:8.5px; fill:#64748b; }
+    .elp    { font-size:8.5px; font-weight:600; fill:#4f46e5; }
+    .h1     { font-size:19px; font-weight:700; fill:#0f172a; }
+    .h2     { font-size:11px; font-weight:400; fill:#64748b; }
+  </style>
+
+  <rect x="0" y="0" width="1060" height="660" fill="#ffffff"/>
+
+  <!-- header -->
+  <text class="h1" x="32" y="44">Secant Pay — Integrations</text>
+  <text class="h2" x="32" y="64">First-party services composing ecosystem providers. Provider API keys never reach the browser — every call is proxied server-side.</text>
+  <line x1="32" y1="80" x2="1028" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ===== Secant Pay (first-party) lane ===== -->
+  <rect class="lane" x="24" y="96" width="768" height="116" rx="10"/>
+  <rect class="tab"  x="24" y="96" width="4" height="116" rx="2"/>
+  <text class="tier" x="40" y="124">SECANT PAY · FIRST-PARTY</text>
+  <text class="tsub" x="40" y="138">builds every signable transaction</text>
+  <g filter="url(#sh)">
+    <rect class="core" x="180" y="150" width="172" height="48" rx="8"/>
+    <rect class="core" x="368" y="150" width="172" height="48" rx="8"/>
+    <rect class="core" x="556" y="150" width="220" height="48" rx="8"/>
+  </g>
+  <text class="nt" x="266" y="172" text-anchor="middle">Frontend</text>
+  <text class="ns" x="266" y="186" text-anchor="middle">App Router + API routes</text>
+  <text class="nt" x="454" y="172" text-anchor="middle">Backend</text>
+  <text class="ns" x="454" y="186" text-anchor="middle">Go · AWS Lambda</text>
+  <text class="nt" x="666" y="172" text-anchor="middle">Secant Blinks</text>
+  <text class="ns" x="666" y="186" text-anchor="middle">Action API · self-hosted</text>
+
+  <!-- ===== external renderer ===== -->
+  <rect class="grp" x="808" y="96" width="228" height="116" rx="10"/>
+  <text class="tier" x="824" y="124">BLINK RENDERER</text>
+  <text class="tsub" x="824" y="138">external · display only</text>
+  <g filter="url(#sh)">
+    <rect class="card" x="824" y="150" width="196" height="48" rx="8"/>
+  </g>
+  <text class="nt" x="922" y="172" text-anchor="middle">Dialect dial.to</text>
+  <text class="ns" x="922" y="186" text-anchor="middle">renders Blink cards</text>
+  <path class="ed" d="M776,174 L824,174"/>
+  <text class="elp" x="800" y="166" text-anchor="middle">renders</text>
+
+  <!-- ===== connectors to provider groups ===== -->
+  <path class="ep" d="M250,198 C190,228 150,236 130,266"/>
+  <text class="elp" x="150" y="244" text-anchor="middle">balances · swaps</text>
+  <path class="e" d="M454,198 L486,266"/>
+  <text class="el" x="430" y="244" text-anchor="middle">quotes · checkout · names</text>
+  <path class="ed" d="M604,312 L604,240 L456,240 L456,200"/>
+  <text class="elp" x="560" y="234" text-anchor="middle">settlement webhook</text>
+  <path class="e" d="M520,198 C720,230 860,238 906,266"/>
+  <text class="el" x="800" y="244" text-anchor="middle">wallet connect</text>
+
+  <!-- ===== EVM ecosystem ===== -->
+  <rect class="grp" x="24" y="270" width="212" height="190" rx="10"/>
+  <rect class="tab" x="24" y="270" width="4" height="190" rx="2"/>
+  <text class="tier" x="40" y="296">EVM ECOSYSTEM</text>
+  <g filter="url(#sh)">
+    <rect class="card" x="48" y="320" width="164" height="58" rx="8"/>
+  </g>
+  <text class="nt" x="130" y="345" text-anchor="middle">Zerion</text>
+  <text class="ns" x="130" y="359" text-anchor="middle">portfolio · swaps · bridges</text>
+
+  <!-- ===== Solana ecosystem ===== -->
+  <rect class="grp" x="260" y="270" width="468" height="190" rx="10"/>
+  <rect class="tab" x="260" y="270" width="4" height="190" rx="2"/>
+  <text class="tier" x="276" y="296">SOLANA ECOSYSTEM</text>
+  <g filter="url(#sh)">
+    <rect class="card" x="284" y="312" width="200" height="58" rx="8"/>
+    <rect class="card" x="504" y="312" width="200" height="58" rx="8"/>
+    <rect class="card" x="284" y="386" width="200" height="58" rx="8"/>
+    <rect class="card" x="504" y="386" width="200" height="58" rx="8"/>
+  </g>
+  <text class="nt" x="384" y="337" text-anchor="middle">Jupiter</text>
+  <text class="ns" x="384" y="351" text-anchor="middle">SPL quotes · checkout</text>
+  <text class="nt" x="604" y="337" text-anchor="middle">Helius</text>
+  <text class="ns" x="604" y="351" text-anchor="middle">settlement webhooks · WS</text>
+  <text class="nt" x="384" y="411" text-anchor="middle">Solana Pay</text>
+  <text class="ns" x="384" y="425" text-anchor="middle">payment URL standard</text>
+  <text class="nt" x="604" y="411" text-anchor="middle">SNS</text>
+  <text class="ns" x="604" y="425" text-anchor="middle">.sol name resolution</text>
+
+  <!-- ===== Wallet connectivity ===== -->
+  <rect class="grp" x="752" y="270" width="284" height="190" rx="10"/>
+  <rect class="tab" x="752" y="270" width="4" height="190" rx="2"/>
+  <text class="tier" x="768" y="296">WALLET CONNECTIVITY</text>
+  <g filter="url(#sh)">
+    <rect class="card" x="776" y="312" width="236" height="40" rx="8"/>
+    <rect class="card" x="776" y="362" width="236" height="40" rx="8"/>
+    <rect class="card" x="776" y="412" width="236" height="40" rx="8"/>
+  </g>
+  <text class="nt" x="894" y="337" text-anchor="middle">Wallet Standard</text>
+  <text class="nt" x="894" y="387" text-anchor="middle">Solana Wallet Adapter</text>
+  <text class="nt" x="894" y="437" text-anchor="middle">EVM Injected Providers</text>
+
+  <!-- ===== legend ===== -->
+  <rect x="24" y="486" width="1012" height="96" rx="10" fill="#fbfcfe" stroke="#eef1f5"/>
+  <text class="tier" x="44" y="512">LEGEND</text>
+  <rect class="core" x="44" y="526" width="34" height="22" rx="5"/>
+  <text class="ns" x="86" y="541" fill="#334155">First-party Secant service</text>
+  <rect class="card" x="44" y="556" width="34" height="22" rx="5"/>
+  <text class="ns" x="86" y="571" fill="#334155">External provider / standard</text>
+  <line x1="360" y1="537" x2="406" y2="537" class="ep"/>
+  <text class="ns" x="416" y="541" fill="#334155">Frontend integration (browser-side)</text>
+  <line x1="360" y1="567" x2="406" y2="567" class="e"/>
+  <text class="ns" x="416" y="571" fill="#334155">Synchronous call</text>
+  <line x1="700" y1="537" x2="746" y2="537" class="ed"/>
+  <text class="ns" x="756" y="541" fill="#334155">Async webhook / render</text>
+  <text class="ns" x="700" y="571" fill="#334155">All provider calls proxied server-side · keys never in the browser</text>
+</svg>

@@ -15,59 +15,7 @@ Secant/
 
 ## System Architecture
 
-```mermaid
-flowchart TB
-  subgraph Clients["Client Layer"]
-    Merchant["Merchant Dashboard"]
-    POS["Scan & Pay Terminal"]
-    SDK["Secant SDK"]
-    Blink["Blink / Action Client"]
-  end
-
-  subgraph Frontend["Frontend — Next.js"]
-    App["App Router\nDashboard, Checkout, Invoices,\nSwap & Bridge, PoS"]
-    ApiRoutes["API Routes\nProvider proxies, Actions endpoints,\nWebhook receivers"]
-  end
-
-  subgraph Wallets["Wallet Layer"]
-    EVM["EVM Wallets\nMetaMask, Coinbase Wallet,\nRabby, injected"]
-    SOL["Solana Wallets\nPhantom, Solflare, Backpack,\nJupiter Mobile"]
-  end
-
-  subgraph Backend["Backend — Go"]
-    Handlers["HTTP Handlers\nAuth, validation,\nJSON schema enforcement"]
-    Initiator["Invoice Initiator\nID generation, amount conversion,\nsettlement data, expiry"]
-    Settler["Settlement Receiver\nWebhook validation, chain matching,\namount verification, atomic settle"]
-  end
-
-  subgraph Storage["Storage Layer"]
-    DynamoDB["DynamoDB\nInvoices, settlement markers,\nconditional writes"]
-  end
-
-  subgraph Providers["External Providers"]
-    Zerion["Zerion API\nEVM portfolio, swaps, bridges"]
-    Jupiter["Jupiter API\nSolana quotes, swaps,\nSPL checkout routing"]
-    Helius["Helius\nSolana webhooks + WebSocket,\nsettlement detection + instant confirmation"]
-    SNS["SNS Resolver\n.sol name resolution"]
-    SolPay["Solana Pay\nPayment URL standard"]
-    Actions["Solana Actions\nBlinks metadata + tx builder"]
-  end
-
-  subgraph Chains["Settlement Chains"]
-    Base["Base / Base Sepolia\nEVM USDC"]
-    Solana["Solana / Devnet\nSPL USDC"]
-  end
-
-  Clients --> Frontend
-  Frontend --> Wallets
-  App --> ApiRoutes
-  ApiRoutes --> Backend
-  ApiRoutes --> Providers
-  Backend --> Storage
-  Backend --> Chains
-  Helius -->|"webhook POST"| ApiRoutes
-  Wallets -->|"sign + submit"| Chains
-```
+![Secant Pay system architecture](assets/system-architecture.svg)
 
 ## Component Detail
 
@@ -92,7 +40,7 @@ The backend is a stateless service responsible for invoice lifecycle management 
 |-----------|---------------|
 | Invoice Initiator | Validates merchant requests, generates cryptographically random invoice IDs (`inv_` + 16 bytes hex), converts USD amounts to atomic units, builds chain-specific settlement data (Solana Pay URL with reference keypair, or Base invoice hash), sets 30-minute expiry |
 | Settlement Receiver | Validates inbound webhook payloads against stored invoice state — chain, recipient, asset, amount, reference/signature must all match. Settles atomically via DynamoDB transactions |
-| HTTP Handlers | Bearer token authentication, strict JSON schema enforcement via `DisallowUnknownFields()`, structured error responses with typed error codes |
+| HTTP Handlers | Per-endpoint authentication (see API Security below), strict JSON schema enforcement via `DisallowUnknownFields()`, structured error responses with typed error codes |
 
 ### Storage — DynamoDB
 
@@ -118,7 +66,9 @@ The SDK provides a programmatic interface for external applications to create pa
 ### Payment Creation
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','actorBkg':'#ffffff','actorBorder':'#475569','actorTextColor':'#1e293b','actorLineColor':'#cbd5e1','signalColor':'#475569','signalTextColor':'#1e293b','noteBkgColor':'#f8fafc','noteBorderColor':'#cbd5e1','noteTextColor':'#334155','activationBkgColor':'#f1f5f9','activationBorderColor':'#94a3b8','sequenceNumberColor':'#ffffff'}}}%%
 sequenceDiagram
+  autonumber
   participant M as Merchant
   participant F as Frontend
   participant B as Backend
@@ -139,7 +89,9 @@ sequenceDiagram
 Two complementary paths run in parallel after a Solana payment is signed. The WebSocket path delivers instant UX feedback; the webhook path is the authoritative settlement mechanism.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','actorBkg':'#ffffff','actorBorder':'#475569','actorTextColor':'#1e293b','actorLineColor':'#cbd5e1','signalColor':'#475569','signalTextColor':'#1e293b','noteBkgColor':'#f8fafc','noteBorderColor':'#cbd5e1','noteTextColor':'#334155','activationBkgColor':'#f1f5f9','activationBorderColor':'#94a3b8','sequenceNumberColor':'#ffffff'}}}%%
 sequenceDiagram
+  autonumber
   participant C as Customer Wallet
   participant Chain as Solana
   participant F as Frontend
@@ -152,16 +104,16 @@ sequenceDiagram
   C->>Chain: Sign and submit USDC transfer
   Note over F: Two parallel paths begin
 
-  rect rgb(235, 245, 255)
+  rect rgb(248, 250, 252)
   Note right of F: Path 1 — Instant UX (WebSocket)
   F->>Confirm: POST { signature }
   Confirm->>H: signatureSubscribe (WSS)
   H-->>Confirm: confirmed (~2-3s)
   Confirm-->>F: { status: confirmed }
-  F-->>C: "Payment confirmed on-chain ✓"
+  F-->>C: Payment confirmed on-chain
   end
 
-  rect rgb(235, 255, 240)
+  rect rgb(241, 245, 249)
   Note right of H: Path 2 — Authoritative Settlement (Webhook)
   Chain-->>H: Transaction finalized
   H->>Webhook: Webhook POST (tx details)
@@ -179,9 +131,10 @@ For Base payments, the flow uses only the webhook path — the WebSocket confirm
 ### Invoice Lifecycle
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#ffffff','primaryBorderColor':'#64748b','primaryTextColor':'#1e293b','lineColor':'#64748b','fontSize':'13px'}}}%%
 stateDiagram-v2
   [*] --> PENDING: Invoice created
-  PENDING --> SETTLED: Valid settlement received\n(atomic DynamoDB transaction)
+  PENDING --> SETTLED: Valid settlement received
   PENDING --> EXPIRED: 30-minute expiry elapsed
   PENDING --> FAILED: Settlement validation failed
   SETTLED --> [*]
@@ -208,7 +161,7 @@ Settlement is atomic. The DynamoDB transaction either succeeds completely (marke
 
 | Control | Implementation |
 |---------|---------------|
-| Authentication | Bearer token on all backend endpoints |
+| Authentication | Per-endpoint: invoice initiation requires a bearer token; the settlement webhook uses an HMAC signature; the Helius webhook uses a constant-time static bearer; the Zerion webhook uses RSA signature verification. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening). |
 | Input validation | `DisallowUnknownFields()` rejects unexpected JSON fields |
 | API key isolation | Provider API keys stay server-side in Next.js API routes, never sent to browser |
 | Response sanitization | RPC proxy scrubs upstream URLs and API key fragments from error responses |

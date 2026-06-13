@@ -85,7 +85,7 @@ stateDiagram-v2
 
 | Control | Detail |
 |---------|--------|
-| **Authentication** | Bearer token required on all backend endpoints |
+| **Authentication** | Per-endpoint: bearer token on invoice initiation; HMAC signature on the settlement webhook; constant-time static bearer on the Helius webhook; RSA signature on the Zerion webhook. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings is currently unauthenticated (planned hardening) |
 | **Input validation** | Go `json.Decoder` with `DisallowUnknownFields()` rejects payloads containing fields not defined in the request struct |
 | **API key isolation** | Provider API keys (Zerion, Jupiter, Helius, Solana RPC) are stored as server-side environment variables. Next.js API routes proxy all provider calls — keys never appear in browser-accessible code or network responses |
 | **Response sanitization** | The Solana RPC proxy scrubs upstream URLs, origin headers, and query parameter values (potential API key fragments) from responses before returning to the client |

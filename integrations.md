@@ -4,41 +4,7 @@ Secant composes ecosystem-standard providers for portfolio data, swap routing, s
 
 ## Integration Map
 
-```mermaid
-flowchart TB
-  subgraph EVM["EVM Ecosystem"]
-    Zerion["Zerion"]
-  end
-
-  subgraph Sol["Solana Ecosystem"]
-    Jupiter["Jupiter"]
-    Helius["Helius"]
-    SolPay["Solana Pay"]
-    Actions["Solana Actions"]
-    SNS["SNS"]
-  end
-
-  subgraph WalletLayer["Wallet Connectivity"]
-    WalletStd["Wallet Standard"]
-    SolAdapter["Solana Wallet Adapter"]
-    EVMInject["EVM Injected Providers"]
-  end
-
-  subgraph Secant["Secant Pay"]
-    Frontend["Frontend"]
-    Backend["Backend"]
-  end
-
-  Frontend --> WalletLayer
-  Frontend --> Zerion
-  Frontend --> Jupiter
-  Frontend --> SNS
-  Frontend --> Actions
-  Backend --> Helius
-  Zerion -.->|"portfolio, swaps, bridges"| Frontend
-  Jupiter -.->|"quotes, swaps, checkout routing"| Frontend
-  Helius -.->|"webhooks"| Backend
-```
+![Secant Pay integration map](assets/integration-map.svg)
 
 ## Zerion
 
@@ -81,17 +47,31 @@ Solana Pay provides the payment URL standard for QR and link-based payment reque
 
 Integration: Payment URLs constructed in the frontend following the Solana Pay specification. Compatible wallets (Phantom, Solflare, Jupiter Mobile) parse the URL and auto-fill the transaction.
 
-## Solana Actions and Blinks
+## Solana Actions and Secant Blinks
 
-Solana Actions expose invoice payment endpoints that unfurl as payable cards in Blinks-compatible clients.
+Secant runs its **own** Solana Action API — "Secant Blinks." An invoice unfurls as a payable card in any Blinks-compatible client, and the signable transaction is assembled by the Secant Go backend, not by any third party.
 
 | Capability | Usage |
 |-----------|-------|
-| Action metadata | Invoice details served as Actions-compliant JSON. When an invoice has a memo, it appears in the Blink card title and description. |
-| Transaction builder | Payment transaction generated on POST from the Action client |
-| Blinks display | Invoices appear as interactive payment cards in supporting clients |
+| Action metadata | Invoice details served as Actions-compliant JSON on `GET`. When an invoice has a memo, it appears in the Blink card title and description. Settled/expired invoices render a disabled card. |
+| Transaction builder | The payment transaction is assembled on `POST` by the backend (`ActionPayService`). Recipient, amount, USDC mint, Solana Pay reference, and the invoice memo all come from the stored invoice — the caller can only supply its own payer account. This keeps Blinks self-custodial and invoice-addressed: a tampered URL cannot redirect funds or change the amount. |
+| Discovery | `actions.json` maps `/pay/*` and `/api/actions/**` on the public origin to the Action API, so wallets and unfurlers can find the endpoints. |
 
-Integration: Next.js API routes implement the Solana Actions specification (`actions.json` + GET/POST endpoints per invoice).
+Integration: Next.js API routes (`/api/actions/pay/{id}` and `actions.json`) are thin proxies to the Go backend (`/action/pay/{id}`), which implements the Actions specification. The backend is the single audited path that turns an invoice into signable bytes.
+
+### Renderers — where a Blink is displayed
+
+The Action API is one thing; *rendering* the card is separate. Secant Blinks are displayed by three independent surfaces, all pointing at the same Secant endpoint:
+
+| Renderer | Role |
+|----------|------|
+| Secant checkout (`/pay/{invoice}`) | The branded, in-app payable card — the primary first-party surface. |
+| Native Blink clients (Phantom, Backpack, X unfurler) | Discover the action via `actions.json` and the `solana-action:` URI and render it natively. |
+| Dialect `dial.to` | A universal hosted web renderer. The invoice page's "Copy Blink" / "Open Blink" buttons wrap the Secant action URL as `dial.to/?action=solana-action:<secant-url>` so the Blink renders as a shareable card even outside native clients. |
+
+### What about Dialect?
+
+Dialect (`dial.to`) is used **only as a renderer/distribution surface**, not as part of the Blink logic. There is no Dialect SDK, no Dialect-hosted action, and no Dialect dependency in the transaction path — the transaction is always built by the Secant backend. `dial.to` is the convenient "share a Blink link anywhere and it renders" wrapper; it is not a fallback for transaction building. If `dial.to` were removed, the raw `solana-action:` URL plus `actions.json` would still render in native Blink-aware wallets — only the universal web preview would be lost.
 
 ## Helius
 
