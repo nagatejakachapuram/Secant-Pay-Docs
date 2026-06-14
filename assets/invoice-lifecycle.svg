@@ -1,6 +1,6 @@
 <svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img">
   <title>Invoice lifecycle state machine</title>
-  <desc>An invoice starts PENDING when created, can be delivered through QR, pay link, Blink, or Dialect request, then transitions to SETTLED on valid settlement, EXPIRED after the 30-minute window, or FAILED on validation failure.</desc>
+  <desc>An invoice starts PENDING when created, can be delivered through QR, pay link, Blink, or Dialect request, then transitions to SETTLED on valid settlement, EXPIRED via a scheduled sweep after the 30-minute window (which refunds the monthly quota slot and stamps a TTL for auto-deletion), or FAILED on validation failure.</desc>
 
   <defs>
     <filter id="sh" x="-20%" y="-20%" width="140%" height="160%">
@@ -59,7 +59,7 @@
   <path class="ep" d="M408,216 C320,256 230,262 210,316"/>
   <text class="tlp" x="252" y="262" text-anchor="middle">valid settlement received</text>
   <path class="e" d="M480,216 L480,316"/>
-  <text class="tl" x="492" y="270" text-anchor="start">30-minute expiry elapsed</text>
+  <text class="tl" x="492" y="270" text-anchor="start">expiry sweep · slot refunded</text>
   <path class="e" d="M552,216 C640,256 730,262 750,316"/>
   <text class="tl" x="712" y="262" text-anchor="middle">settlement validation failed</text>
 
@@ -72,7 +72,7 @@
   <text class="st" x="210" y="344" text-anchor="middle">SETTLED</text>
   <text class="ss" x="210" y="360" text-anchor="middle">payment confirmed on-chain</text>
   <text class="st" x="480" y="344" text-anchor="middle">EXPIRED</text>
-  <text class="ss" x="480" y="360" text-anchor="middle">window elapsed unpaid</text>
+  <text class="ss" x="480" y="360" text-anchor="middle">swept · TTL auto-delete</text>
   <text class="st" x="750" y="344" text-anchor="middle">FAILED</text>
   <text class="ss" x="750" y="360" text-anchor="middle">validation failed</text>
 

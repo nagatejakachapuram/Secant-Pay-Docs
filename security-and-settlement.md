@@ -79,10 +79,10 @@ Both items succeed or both fail. There is no intermediate state. This provides:
 stateDiagram-v2
   [*] --> PENDING: Created with conditional put\n(no duplicate IDs)
   PENDING --> SETTLED: Atomic transaction\n(marker + status update)
-  PENDING --> EXPIRED: Expiry check before settlement
+  PENDING --> EXPIRED: Scheduled sweep\n(after 30-min expiry) + quota refund
   PENDING --> FAILED: Validation failure
-  SETTLED --> [*]: Terminal state
-  EXPIRED --> [*]: Terminal state
+  SETTLED --> [*]: Retained (no TTL)
+  EXPIRED --> [*]: Auto-deleted via DynamoDB TTL
   FAILED --> [*]: Terminal state
 ```
 
@@ -90,14 +90,17 @@ stateDiagram-v2
 |-----------|-----------|
 | Creation | `attribute_not_exists(invoice_id)` prevents duplicate invoice IDs |
 | Settlement | `TransactWriteItems` with dual conditions prevents double-settle |
-| Expiry | Checked server-side before settlement processing, not client-side |
+| Expiry | Read endpoints derive `EXPIRED` past the 30-min window; a scheduled sweep then transitions `PENDING → EXPIRED` with a conditional write (so a late payment and the sweep can never both act), refunds the monthly quota slot, and stamps a TTL |
+| Cleanup | Expired invoices auto-delete via DynamoDB TTL after a grace window; settled invoices are retained |
 | Status reads | `ConsistentRead: true` for settlement validation to prevent stale reads |
 
 ## API Security
 
 | Control | Detail |
 |---------|--------|
-| **Authentication** | Per-endpoint: bearer token on invoice initiation; HMAC signature on the settlement webhook; constant-time static bearer on the Helius webhook; RSA signature on the Zerion webhook; server-held Dialect credentials for alert sending. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings requires a per-wallet ownership signature (Solana ed25519 / EVM EIP-191), so a caller can only read or write its own profile |
+| **Authentication** | Per-endpoint: bearer token on invoice initiation and the usage read; HMAC signature on the settlement webhook; constant-time static bearer on the Helius webhook; RSA signature on the Zerion webhook; server-held Dialect credentials for alert sending. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only data a payment QR/Blink already carries and build *unsigned* transactions the payer must sign. Merchant settings requires a per-wallet ownership signature (Solana ed25519 / EVM EIP-191), so a caller can only read or write its own profile |
+| **Two-factor (optional)** | Merchants may enable TOTP on top of the wallet signature. When enabled, settings reads/writes and disabling 2FA additionally require a 6-digit authenticator code. Secrets are AES-256-GCM encrypted at rest with a backend-only key, never returned to the client, and replay-protected per 30-second step |
+| **Plan quota** | Per-merchant monthly invoice cap (Starter = 10) enforced with an atomic conditional increment — a client cannot bypass it by racing or skipping a UI check. The plan is server-controlled; a settings write cannot self-upgrade it. Expired invoices refund their slot |
 | **Input validation** | Go `json.Decoder` with `DisallowUnknownFields()` rejects payloads containing fields not defined in the request struct |
 | **API key isolation** | Provider API keys (Zerion, Jupiter, Helius, Solana RPC, Dialect Alerts API key) are stored as server-side environment variables. Next.js API routes proxy all privileged provider calls — keys never appear in browser-accessible code or network responses |
 | **Response sanitization** | The Solana RPC proxy scrubs upstream URLs, origin headers, and query parameter values (potential API key fragments) from responses before returning to the client |
@@ -121,6 +124,8 @@ Webhook events from Helius are treated as settlement signals, not as the sole so
 5. Only then executes the atomic settlement transaction.
 
 Webhook replay and duplicate delivery are handled by the settlement marker — if the marker already exists, the duplicate webhook is safely rejected without modifying invoice state.
+
+Helius only fires for pre-registered recipient addresses, so the backend registers each Solana invoice recipient on the webhook's watched-address list at invoice creation (idempotently, deduplicated in a dedicated table). Merchants can also pre-register settlement addresses in Account Settings. The Helius API key and webhook URL live only on the backend — the URL carries the key as a query parameter and is never logged or returned to a client; registration failures surface as generic errors.
 
 ## Real-Time Transaction Confirmation
 
@@ -150,7 +155,10 @@ Testnet mode uses Base Sepolia and Solana Devnet. Settlement detection on Solana
 |---------|---------------|
 | Idempotent settlement | Settlement markers prevent reprocessing |
 | Webhook replay safety | Duplicate webhooks rejected by conditional writes |
-| Invoice expiration | 30-minute server-enforced expiry |
+| Invoice expiration | 30-minute server-enforced expiry; scheduled sweep flips `PENDING → EXPIRED`, refunds quota, and stamps a TTL |
+| Expired-invoice cleanup | DynamoDB TTL auto-deletes expired invoices after a grace window (default 7 days); settled invoices retained |
+| Invoice quota | Per-merchant monthly cap (Starter 10/mo) via atomic counter; expired invoices refund their slot |
+| Settlement address registration | Solana recipients auto-registered on the Helius webhook at invoice creation; pre-registration available in Settings |
 | Chain and asset display | Active chain and token shown in every checkout screen |
 | Error states | Wrong chain, insufficient balance, expired invoice, and same-token swap errors handled with user-facing messages |
 | Consistent reads | Settlement validation reads use `ConsistentRead: true` |

@@ -7,7 +7,7 @@ Secant Pay is a modular payment platform built as a monorepo workspace with clea
 ```text
 Secant/
   Secant-Pay/
-    Secant-frontend/       Next.js 14 app with App Router and API routes
+    Secant-frontend/       Next.js 16 app with App Router and API routes
     Secant-backend/        Go backend — invoice lifecycle, settlement validation, webhooks
   Secant-SDK/              TypeScript SDK — payment intents, status polling, embeddable checkout
   Secant Pay docs/         GitBook documentation (this repo)
@@ -21,7 +21,7 @@ Secant/
 
 ### Frontend — Next.js
 
-The frontend serves as both the merchant interface and the API gateway. Built on Next.js 14 with the App Router.
+The frontend serves as both the merchant interface and the API gateway. Built on Next.js 16 with the App Router.
 
 | Layer | Responsibility |
 |-------|---------------|
@@ -38,24 +38,31 @@ The backend is a stateless service responsible for invoice lifecycle management 
 
 | Component | Responsibility |
 |-----------|---------------|
-| Invoice Initiator | Validates merchant requests, generates cryptographically random invoice IDs (`inv_` + 16 bytes hex), converts USD amounts to atomic units, builds chain-specific settlement data (Solana Pay URL with reference keypair, or Base invoice hash), sets 30-minute expiry |
+| Invoice Initiator | Validates merchant requests, generates cryptographically random invoice IDs (`inv_` + 16 bytes hex), converts USD amounts to atomic units, builds chain-specific settlement data (Solana Pay URL with reference keypair, or Base invoice hash), sets 30-minute expiry. Enforces the per-merchant monthly invoice quota (atomic counter, keyed by account wallet) and auto-registers Solana recipients on the Helius webhook |
+| Merchant Settings + 2FA | Wallet-signature-gated read/write of the merchant profile (business name, contact, settlement mode, default chain, website, settlement addresses). Plan is server-controlled. Optional TOTP two-factor (AES-256-GCM encrypted secrets) for settings access |
+| Usage Reader | Returns the authoritative plan + monthly invoice usage for an account (same counter enforcement uses), behind the initiator bearer token |
+| Helius Address Manager | Appends Solana settlement addresses to the Helius webhook's watched list, idempotently (dedup table). API key/URL stay backend-only |
+| Invoice Sweeper | Scheduled (EventBridge) job that transitions overdue `PENDING` invoices to `EXPIRED` via conditional write, refunds the quota slot, and stamps a TTL for auto-deletion |
 | Payment Request Notifier | Sends optional Dialect Alerts to a customer Solana wallet after invoice creation. Notification delivery is separate from settlement and never changes invoice payment parameters |
 | Settlement Receiver | Validates inbound webhook payloads against stored invoice state — chain, recipient, asset, amount, reference/signature must all match. Settles atomically via DynamoDB transactions |
 | HTTP Handlers | Per-endpoint authentication (see API Security below), strict JSON schema enforcement via `DisallowUnknownFields()`, structured error responses with typed error codes |
 
 ### Storage — DynamoDB
 
-Single-table design with `invoice_id` as the partition key.
+The invoice table uses `invoice_id` as the partition key; a few small companion tables back settings, quota, and Helius dedup.
 
-| Record Type | Key Pattern | Purpose |
-|-------------|-------------|---------|
-| Invoice | `inv_{random_hex}` | Invoice state, settlement data, timestamps |
-| Settlement marker | `settlement#{chain}:{tx_id}` | Prevents double-settlement of the same transaction |
+| Table | Key | Purpose |
+|-------|-----|---------|
+| `secant_invoices` | `invoice_id` (`inv_{random_hex}`) | Invoice state, settlement data, timestamps, `account_wallet`, `ttl`. Settlement markers (`settlement#{chain}:{tx_id}`) share this table to prevent double-settlement. TTL enabled on the `ttl` attribute for expired-invoice cleanup |
+| `secant-merchant-settings` | `wallet_address` | Merchant profile, plan, settlement addresses, encrypted TOTP secret |
+| `secant-usage` | `usage_key` (`{account_wallet}#{YYYY-MM}`) | Monthly invoice counter for plan enforcement |
+| `secant-helius-watched` | `address` | Dedup registry so each Solana address is registered on the Helius webhook only once |
 
 Key guarantees:
 
 - **No duplicate invoices.** `PutItem` with `attribute_not_exists(invoice_id)` condition.
 - **No double settlement.** `TransactWriteItems` atomically creates a settlement marker and updates the invoice, both with condition expressions. If the marker already exists or the invoice is not `PENDING`, the transaction fails.
+- **Bypass-proof quota.** The monthly counter is incremented with an atomic conditional write, so concurrent requests can never exceed the cap; expired invoices decrement (refund) the counter.
 - **Strong consistency.** `GetItem` uses `ConsistentRead: true` for settlement validation reads.
 
 ### SDK — TypeScript (Phase 2)
@@ -108,7 +115,9 @@ Settlement is atomic. The DynamoDB transaction either succeeds completely (marke
 | API key isolation | Provider API keys stay server-side in Next.js API routes, never sent to browser |
 | Response sanitization | RPC proxy scrubs upstream URLs and API key fragments from error responses |
 | Idempotency | Settlement markers prevent processing the same transaction twice |
-| Expiry | Invoices expire after 30 minutes, enforced before settlement |
+| Expiry | Invoices expire after 30 minutes; a scheduled sweep flips `PENDING → EXPIRED`, refunds quota, and a DynamoDB TTL auto-deletes expired records |
+| Two-factor (optional) | TOTP on top of the wallet signature for merchant settings; AES-256-GCM encrypted secrets, never returned to the client |
+| Plan quota | Per-merchant monthly invoice cap enforced via atomic counter; server-controlled plan (no self-upgrade) |
 
 ## Deployment
 
@@ -116,7 +125,8 @@ Settlement is atomic. The DynamoDB transaction either succeeds completely (marke
 |-----------|--------|
 | Frontend | Vercel (Next.js) |
 | Backend | AWS Lambda (Go) or standalone HTTP |
-| Storage | AWS DynamoDB |
+| Storage | AWS DynamoDB (invoices + settings/usage/Helius-dedup tables; TTL on invoices) |
+| Scheduled jobs | EventBridge rule (~every 5 min) invoking the invoice-sweeper Lambda |
 | Notification delivery | Dialect Alerts for customer-addressed invoice requests |
 
-The backend is designed as stateless Lambda functions — each endpoint (initiate, settle, status) is independently deployable. The frontend API routes handle provider proxying and webhook ingestion at the edge.
+The backend is designed as stateless Lambda functions — each endpoint (initiate/usage, settle, status, invoice, action-pay, jupiter-checkout, merchant-settings + 2FA, zerion/helius webhooks) is independently deployable, plus a scheduled invoice-sweeper. The frontend API routes handle provider proxying and webhook ingestion at the edge.

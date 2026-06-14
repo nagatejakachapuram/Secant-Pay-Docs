@@ -126,7 +126,7 @@
     <rect class="card" x="388" y="498" width="300" height="46" rx="8"/>
   </g>
   <text class="nt" x="538" y="519" text-anchor="middle">DynamoDB</text>
-  <text class="ns" x="538" y="533" text-anchor="middle">invoices · settlement markers · merchant settings</text>
+  <text class="ns" x="538" y="533" text-anchor="middle">invoices (TTL) · markers · settings · usage · Helius watch</text>
 
   <!-- L6 providers -->
   <g filter="url(#sh)">

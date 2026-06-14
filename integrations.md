@@ -93,11 +93,14 @@ Helius powers native Solana settlement detection via webhooks and real-time tran
 | Capability | Usage |
 |-----------|-------|
 | Webhook delivery | Real-time notification when a Solana transaction matches monitored criteria |
+| Address registration | Solana settlement addresses are appended to the webhook's watched-address list — automatically when an invoice is created, or ahead of time via Account Settings — so payments to new recipients are detected. Registration is idempotent (deduplicated in a backend table) |
 | WebSocket confirmation | Instant on-chain confirmation via `signatureSubscribe` — up to 200 ms faster than standard Solana WebSockets |
 | Devnet support | Settlement detection works on both devnet and mainnet |
 | Reference matching | Webhook payloads include transaction details for reference-based invoice matching |
 
-Integration: Two complementary paths.
+Integration: Three complementary paths — address registration, settlement webhooks, and instant WebSocket confirmation.
+
+**Address registration:** Helius webhooks only fire for addresses on the watched list, so the backend registers each Solana invoice recipient when the invoice is created (and merchants can pre-register in Settings). The Helius API key and webhook URL are backend-only — the URL carries the key as a query parameter and is never logged or returned to a client.
 
 **Settlement authority (webhooks):** Helius webhook POSTs to a Next.js API route, which forwards to the Go backend for settlement validation. Because Helius can deliver events at confirmed commitment before finalization, the backend re-verifies the transaction at confirmed commitment and then checks it against stored invoice state before marking it settled. This is the authoritative settlement path.
 

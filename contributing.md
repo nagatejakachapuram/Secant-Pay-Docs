@@ -7,7 +7,7 @@ Secant Pay is organized as a monorepo workspace. Contributions to documentation,
 ```text
 Secant/
   Secant-Pay/
-    Secant-frontend/       Next.js 14 — App Router, API routes, UI components
+    Secant-frontend/       Next.js 16 — App Router, API routes, UI components
     Secant-backend/        Go — invoice lifecycle, settlement, webhooks
   Secant-SDK/              TypeScript — payment intents, status, embeddable checkout
   Secant Pay docs/         GitBook documentation
@@ -32,7 +32,7 @@ Docs live in `Secant Pay docs/` at the workspace root. This directory is a self-
 
 ## Frontend
 
-The frontend is a Next.js 14 application using the App Router.
+The frontend is a Next.js 16 application using the App Router.
 
 | Area | Convention |
 |------|-----------|

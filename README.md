@@ -14,7 +14,7 @@ Merchants connect their own wallets, create payment requests, optionally send th
 
 ## Current State
 
-Phase 1 is live with multi-wallet dashboard, terminal checkout, Scan & Pay point-of-sale, invoice generation with pay links, wallet QR, Secant Blinks, optional Dialect customer requests, swap and bridge routing, and Helius webhook settlement on Solana. See [Phase 1: Current Build](./phase-1-current-build.md) for the full feature set.
+Phase 1 is live with multi-wallet dashboard, terminal checkout, Scan & Pay point-of-sale, invoice generation with pay links, wallet QR, Secant Blinks, optional Dialect customer requests, swap and bridge routing, and Helius webhook settlement on Solana. Accounts use wallet-signature settings with optional TOTP two-factor, plan-based monthly invoice limits (with expired-invoice refunds and auto-cleanup), and automatic Helius address registration. See [Phase 1: Current Build](./phase-1-current-build.md) for the full feature set.
 
 ## Roadmap
 

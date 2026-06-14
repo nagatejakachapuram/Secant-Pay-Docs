@@ -16,7 +16,7 @@ Secant tracks payment state through on-chain data, Solana reference keys, Helius
 
 ### Manage Invoices
 
-Invoices become shareable payment links. On Solana, invoice links also expose Action endpoints so they unfurl as payable cards in clients that support Blinks. Merchants can add a customer Solana wallet to send a Dialect request automatically; the request points back to the same Secant pay link and invoice settlement record. Each invoice carries a 30-minute expiry, unique reference, and full settlement data for the target chain.
+Invoices become shareable payment links. On Solana, invoice links also expose Action endpoints so they unfurl as payable cards in clients that support Blinks. Merchants can add a customer Solana wallet to send a Dialect request automatically; the request points back to the same Secant pay link and invoice settlement record. Each invoice carries a 30-minute expiry, unique reference, and full settlement data for the target chain. Plans set a monthly invoice allowance (Starter includes 10 active invoices/month; Growth and Enterprise are unlimited), and unpaid invoices that expire refund their slot automatically.
 
 ### Swap and Bridge
 

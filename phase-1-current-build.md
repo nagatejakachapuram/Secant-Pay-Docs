@@ -49,6 +49,16 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 - Invoice status tracking: PENDING, SETTLED, EXPIRED, FAILED.
 - Settled invoices remain visible in the merchant list and cannot be hidden from the local invoice list UI.
 - 30-minute invoice expiry enforced at both creation and settlement time.
+- Plan-based monthly invoice limits: the **Starter** plan allows **10 active invoices per calendar month**; **Growth** and **Enterprise** are unlimited. An invoice counts while it is pending or settled — when an unpaid invoice expires, its slot is automatically refunded, so abandoned invoices never permanently cost an allowance. The cap is enforced server-side with an atomic counter (no client-side bypass), and current usage (e.g. "Starter · 7 / 10 this month") is shown on the Invoices page.
+- Automatic expiry sweep: a scheduled job transitions overdue `PENDING` invoices to `EXPIRED`, refunds the monthly quota slot, and stamps a DynamoDB TTL so the expired record is auto-deleted after a grace window. Settled invoices carry no TTL and are retained.
+
+## Account Settings
+
+- Merchant profile keyed by connected wallet: business name, contact email/phone, settlement mode, default network, and website.
+- Wallet-signature gate: profile details are blurred until the wallet proves ownership by signing a one-time message. Nothing is cached in the browser.
+- Optional two-factor authentication (TOTP): enable an authenticator app on top of the wallet signature. When enabled, reading and writing settings (and disabling 2FA) additionally require a 6-digit code. TOTP secrets are AES-256-GCM encrypted at rest and never leave the backend.
+- Settlement-address pre-registration: merchants can add Solana settlement addresses ahead of time so the Helius webhook watches them before any invoice is issued.
+- Plan and monthly usage are surfaced on the Invoices page; the plan is server-controlled (a settings write can never self-upgrade it).
 
 ## Notifications (Dialect Alerts)
 
@@ -72,6 +82,7 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 - Solana Pay URL generation with reference keypairs and memo support.
 - Helius webhook endpoint for native Solana settlement detection on both devnet and mainnet.
 - Helius webhook settlement verified on mainnet with invoice status changing from `PENDING` to `SETTLED` after payment.
+- Automatic Helius address registration: when a Solana invoice is created, the recipient address is appended to the Helius webhook's watched-address list (idempotently — each address is registered once), so payments to a brand-new recipient are detected without manual dashboard configuration. The Helius API key stays backend-only.
 - SNS `.sol` recipient name resolution.
 - SPL token transfers through `@solana/spl-token` with proper associated token account handling.
 - Compute budget priority fee support for reliable transaction landing under congestion.
@@ -82,12 +93,14 @@ Phase 1 is the product that is live in the current Secant workspace. Everything 
 - Atomic settlement via DynamoDB `TransactWriteItems` — settlement marker and invoice update succeed or fail together.
 - Settlement marker rows prevent double-settlement of the same on-chain transaction.
 - Consistent reads on invoice lookups during settlement validation.
-- Invoice expiry checked before settlement processing.
+- Invoice expiry checked before settlement processing, and an independent scheduled sweep transitions stale `PENDING` invoices to `EXPIRED` (conditional write, so a late payment and the sweep can never both act) and refunds the merchant's monthly quota slot.
 
 ## API Security
 
 - Per-endpoint authentication: bearer token on invoice initiation, HMAC signature on the settlement webhook, constant-time static bearer on the Helius webhook, RSA signature on the Zerion webhook. Public payment-surface endpoints (invoice details, Blink action, Jupiter checkout) are intentionally unauthenticated — they expose only payable data and build unsigned transactions the payer signs.
 - Wallet-owned account settings: reading or writing a merchant profile requires a fresh wallet-ownership signature (Solana ed25519 / EVM EIP-191), and the merchant dashboard keeps the profile blurred until the wallet verifies.
+- Optional TOTP two-factor authentication layered on top of the wallet signature for settings reads/writes; secrets are AES-256-GCM encrypted at rest and never serialized to the client.
+- Plan/usage endpoint is served behind the same server-side initiator token as invoice creation, so monthly usage is read from the authoritative counter rather than guessed in the browser.
 - Strict JSON schema enforcement — `DisallowUnknownFields()` rejects payloads with unexpected fields.
 - Provider API keys isolated to server-side Next.js API routes, never exposed to browser.
 - RPC proxy with response sanitization to prevent API key leakage through error messages.
